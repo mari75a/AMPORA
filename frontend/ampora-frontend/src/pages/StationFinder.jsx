@@ -68,7 +68,7 @@ const StationFinder = () => {
         <input
           type="text"
           placeholder="Search station name, city, or location..."
-          className="w-full p-3 rounded-xl border border-emerald-300 outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full p-3 rounded-xl border border-emerald-300 outline-none focus:ring-2 text-black focus:ring-emerald-500"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

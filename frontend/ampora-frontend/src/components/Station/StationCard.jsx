@@ -50,7 +50,10 @@ const StationCard = ({ station }) => {
       </div>
 
       {/* CHARGERS LIST */}
-      <h3 className="mt-8 mb-3 font-semibold text-black">Available Chargers</h3>
+      <div className="w-12/12 flex justify-center items-center">
+        <button className="p-2 w-6/12 border-2 border-b-emerald-500 bg-white ">Book now</button>
+      </div>
+
 
       <div className="grid grid-cols-2 gap-4">
         {station.chargers?.map((charger, index) => (

@@ -1,115 +1,143 @@
-import React from 'react'
-import icon1 from '../assets/adapter.png'
-import roadtrip from '../assets/road-trip.png'
-import mark from '../assets/placeholder.png'
+import React from "react";
+import { motion } from "framer-motion";
+import icon1 from "../assets/battery1.png";
+import roadtrip from "../assets/one-way-trip.png";
+import mark from "../assets/location.png";
+import bg1 from "../assets/bg1.jpg";
+import EVSimulator from "../components/UI/EVSimulator";
+import HeroSection from "../components/UI/HeroSection";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 50 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.8 } },
+};
+
 const Home = () => {
   return (
-    <div className='flex flex-col w-screen  bg-[#EDFFFF]'>
-      <div className='w-12/12  flex justify-center items-center mt-2'>
+    <div className="w-full min-h-screen bg-[#EDFFFF] overflow-hidden">
 
-        <div className='w-5/12 h-[50vh] bg-[#2EC770] rounded-tl-[50px] rounded-bl-[50px] bg-[url(./assets/bg1.jpg)]'></div>
-        <div className='w-5/12 h-[50vh] bg-[#D0FBE7] rounded-tr-[50px] rounded-br-[50px] '>
-          <h2 className=' mt-5 font-bold text-black text-[50px] text-center'>POWER YOUR RV</h2>
-          <div className='mt-5 w-12/12 flex justify-center items-center'>
-            <input type="text" className='w-8/12  h-[50px] border-2 border-[#2EC770] rounded-[50px] bg-white' />
-          </div>
+      <HeroSection />
 
-          <div className=' mt-8 w-12/12 flex justify-center items-center'>
-            <div className='w-2/12 border-5 border-[#2EC770] -skew-x-12 bg-white h-[100px]'></div>
-            <div className=' ms-2 w-2/12 border-5 border-[#2EC770] -skew-x-12 bg-white h-[100px]'></div>
-            <div className=' ms-2 w-2/12 border-5 border-[#2EC770] -skew-x-12 bg-white h-[100px]'></div>
-          </div>
-
-        </div>
-
-
+      {/* ============== ELECTRIC FLOW LINE ============== */}
+      <div className="relative w-full flex justify-center mt-10">
+        <div className="electric-line"></div>
       </div>
 
-      <div className=' mt-8 w-12/12 flex justify-center items-center'>
-        <div className='mx-2 w-2/12 rounded-2xl shadow-md/30  bg-white h-[200px] flex flex-col gap-5 justify-center items-center p-5 hover:shadow-2xl'>
-          <h2 className='text-center mt-5 font-bold text-black text-[20px]'>FIND STATIONS</h2>
-          <img src={mark} className="mx-5 w-[50px] h-[50px]" />
+      {/* ============== FEATURE CARDS ============== */}
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="show"
+        className="mt-20 flex justify-center gap-10 px-16"
+      >
+        {[
+          { title: "Find Stations", img: mark },
+          { title: "Plan Trip", img: roadtrip },
+          { title: "Smart Routing", img: icon1 },
+        ].map((item, i) => (
+          <motion.div
+            key={i}
+            whileHover={{ scale: 1.1, y: -10 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="w-3/12 h-[230px] bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
+          >
+            <h3 className="font-bold text-xl text-gray-800">{item.title}</h3>
+            <img src={item.img} className="w-20 h-20 mt-4" />
+          </motion.div>
+        ))}
+      </motion.div>
 
-        </div>
-        <div className='mx-2 w-2/12 rounded-2xl shadow-md/30  bg-white h-[200px] flex flex-col gap-5 justify-center items-center p-5 hover:shadow-2xl'>
-          <h2 className='text-center mt-5 font-bold text-black text-[20px]'>PLAN TRIP</h2>
-          <img src={roadtrip} className="mx-5 w-[50px] h-[50px]" />
+      {/* ============== WHY CHOOSE US ============== */}
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="show"
+        className="w-full mt-28 bg-[#D0FBE7] py-16 flex justify-center"
+      >
+        <h2 className="text-[38px] font-extrabold text-gray-900">
+          Why You Should Choose Ampora ⚡
+        </h2>
+      </motion.div>
 
-        </div>
-        <div className='mx-2 w-2/12 rounded-2xl shadow-md/30  bg-white h-[200px] flex flex-col gap-5 justify-center items-center p-5 hover:shadow-2xl'>
-          <h2 className='text-center mt-5 font-bold text-black text-[20px]'>FIND STATIONS</h2>
-          <img src={mark} className="mx-5 w-[50px] h-[50px]" />
+      {/* ============== STATS ============== */}
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="show"
+        className="flex justify-center gap-10 mt-10 px-16"
+      >
+        {[
+          {num: "150+", label: "Active Charging Stations"},
+          {num: "99%", label: "Uptime Availability"},
+          {num: "50k+", label: "Trips Optimized"},
+        ].map((i, index) => (
+          <motion.div
+            key={index}
+            whileHover={{ scale: 1.12 }}
+            className="w-3/12 bg-white p-8 h-[200px] shadow-xl rounded-2xl  flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
+          >
+            <h1 className="text-[55px] font-extrabold text-emerald-500">{i.num}</h1>
+            <p className="text-gray-700 mt-2 text-sm">{i.label}</p>
+          </motion.div>
+        ))}
+      </motion.div>
 
-        </div>
+<EVSimulator />
 
-      </div>
+      {/* ============== BOTTOM INFO SECTIONS ============== */}
+      <div className="flex justify-center mt-20 gap-8 px-16">
 
-      <div className='w-12/12 flex justify-center items-center bg-[#D0FBE7] h-[200px] mt-5 '>
-        <h2 className=' mt-5 font-bold text-black text-[30px] text-center'> Why you choose us</h2>
-      </div>
+        {/* LEFT */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          className="w-5/12 bg-[#F8F8F8] rounded-[40px] shadow-xl p-8"
+        >
+          <h2 className="text-[32px] font-bold text-gray-800">Power Up Your Life ⚡</h2>
 
-      <div className=' mt-8 w-12/12 flex justify-center items-center'>
-        <div className='mx-2 w-2/12 rounded-2xl shadow-md/30  bg-white h-[200px] p-5 hover:shadow-2xl'>
-          <h2 className='text-center mt-5 font-bold text-[#2EC770] text-[50px]'>100+</h2>
-          <p className='text-center mt-2 font-medium text-black text-[10px]'>Station actives</p>
+          <div className="flex mt-6">
+            <img src={icon1} className="w-32 h-32" />
 
-        </div>
-        <div className='mx-2 w-2/12 rounded-2xl shadow-md/30  bg-white h-[200px] p-5 hover:shadow-2xl'>
-          <h2 className='text-center mt-5 font-bold text-[#2EC770] text-[50px]'>100+</h2>
-          <p className='text-center mt-2 font-medium text-black text-[10px]'>Station actives</p>
-
-        </div>
-        <div className='mx-2 w-2/12 rounded-2xl shadow-md/30  bg-white h-[200px] p-5 hover:shadow-2xl'>
-          <h2 className='text-center mt-5 font-bold text-[#2EC770] text-[50px]'>100+</h2>
-          <p className='text-center mt-2 font-medium text-black text-[10px]'>Station actives</p>
-
-        </div>
-
-
-
-      </div>
-
-      <div className='w-12/12  flex justify-center items-center mt-8'>
-
-        <div className='w-5/12 h-[40vh] bg-[#F8F8F8] rounded-tl-[50px] rounded-bl-[50px] '>
-          <h2 className=' mt-5 font-bold text-black text-[30px] ms-5'>Power up your life</h2>
-          <div className='flex mt-5'>
-            <img src={icon1} className="mx-5 w-[100px] h-[100px]" />
-            <div className='flex flex-col justify-center items-center gap-3'>
-              <h2 className=' mt-5 font-bold text-black text-[20px] text-center'>Lighting fast charging</h2>
-              <p className='text-black'>Lighting fast charging Lighting fast charging
-                Lighting fast </p>
-
-              <div className='w-4/12 border-2 flex justify-center text-center items-center h-[50px] border-emerald-400 bg-white text-black rounded-2xl'>See chargers</div>
-
+            <div className="ml-6 flex flex-col justify-center">
+              <h3 className="text-xl font-semibold text-black">Lightning Fast Charging</h3>
+              <p className="text-gray-600 mt-2">
+                Experience ultra-fast charging to keep your EV running at full power.
+              </p>
+              <button className="mt-5 px-6 py-2 bg-white border-2 border-emerald-400 rounded-xl shadow-sm hover:shadow-lg">
+                See Chargers
+              </button>
             </div>
           </div>
+        </motion.div>
 
-        </div>
-        <div className='w-5/12 h-[40vh] bg-[#74FABD] rounded-tr-[50px] rounded-br-[50px] '>
-          <h2 className=' mt-5 font-bold text-black text-[30px] ms-5'>Effortless Trip planning</h2>
-          <div className='flex mt-5'>
-            <img src={roadtrip} className="mx-5 w-[100px] h-[100px]" />
-            <div className='flex flex-col justify-center items-center gap-3'>
-              <h2 className=' mt-5 font-bold text-black text-[20px] text-center'>Lighting fast charging</h2>
-              <p className='text-black'>Lighting fast charging Lighting fast charging
-                Lighting fast </p>
+        {/* RIGHT */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          className="w-5/12 bg-[#A0F5CD] rounded-[40px] shadow-xl p-8"
+        >
+          <h2 className="text-[32px] font-bold text-gray-800">Effortless Trip Planning</h2>
 
-              <div className='px-4 border-2 flex justify-center text-center items-center h-[50px] border-emerald-400 bg-white text-black rounded-2xl'>Plan your next trip</div>
+          <div className="flex mt-6">
+            <img src={roadtrip} className="w-32 h-32" />
 
+            <div className="ml-6 flex flex-col justify-center">
+              <h3 className="text-xl font-semibold text-black">Smart Route Optimization</h3>
+              <p className="text-gray-700 mt-2">
+                Plan the most efficient route with real-time station data.
+              </p>
+              <button className="mt-5 px-6 py-2 bg-white border-2 border-emerald-400 rounded-xl shadow-sm hover:shadow-lg">
+                Plan Trip
+              </button>
             </div>
           </div>
-
-        </div>
-
-
+        </motion.div>
       </div>
-
 
     </div>
+  );
+};
 
-
-  )
-}
-
-export default Home
+export default Home;
