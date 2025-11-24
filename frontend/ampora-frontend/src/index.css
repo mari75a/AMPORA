@@ -82,6 +82,50 @@ button:focus-visible {
   50% { box-shadow: 0 0 25px #2EC770; }
   100% { box-shadow: 0 0 10px #2EC770; }
 }
+@keyframes cableFlow {
+  0% {
+    stroke-dashoffset: 200;
+  }
+  100% {
+    stroke-dashoffset: -200;
+  }
+}
+@keyframes cableFlowMinimal {
+  0% { stroke-dashoffset: 180; }
+  100% { stroke-dashoffset: -180; }
+}
+.animate-cable-minimal {
+  stroke-dasharray: 180;
+  animation: cableFlowMinimal 2.5s linear infinite;
+}
+
+@keyframes plugBounceMinimal {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+.animate-plug-minimal {
+  animation: plugBounceMinimal 1.7s ease-in-out infinite;
+}
+
+
+.animate-cable {
+  stroke-dasharray: 200;
+  animation: cableFlow 3s linear infinite;
+}
+
+@keyframes plugBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-plug {
+  animation: plugBounce 1.8s ease-in-out infinite;
+}
+
 
 /* ⚡ Charging spark dots */
 .electric-spark {

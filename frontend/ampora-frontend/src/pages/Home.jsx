@@ -14,7 +14,7 @@ const fadeUp = {
 
 const Home = () => {
   return (
-    <div className="w-full min-h-screen bg-[#EDFFFF] overflow-hidden">
+    <div className="w-screen min-h-screen bg-[#EDFFFF] overflow-hidden">
 
       <HeroSection />
 
@@ -28,7 +28,7 @@ const Home = () => {
         variants={fadeUp}
         initial="hidden"
         whileInView="show"
-        className="mt-20 flex justify-center gap-10 px-16"
+        className="mt-20 flex flex-col lg:flex-row justify-center gap-10 px-16"
       >
         {[
           { title: "Find Stations", img: mark },
@@ -39,7 +39,7 @@ const Home = () => {
             key={i}
             whileHover={{ scale: 1.1, y: -10 }}
             transition={{ type: "spring", stiffness: 200 }}
-            className="w-3/12 h-[230px] bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
+            className="w-12/12 lg:w-3/12 h-[230px] bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
           >
             <h3 className="font-bold text-xl text-gray-800">{item.title}</h3>
             <img src={item.img} className="w-20 h-20 mt-4" />
@@ -54,7 +54,7 @@ const Home = () => {
         whileInView="show"
         className="w-full mt-28 bg-[#D0FBE7] py-16 flex justify-center"
       >
-        <h2 className="text-[38px] font-extrabold text-gray-900">
+        <h2 className="text-[38px] font-extrabold text-gray-900 text-center">
           Why You Should Choose Ampora ⚡
         </h2>
       </motion.div>
@@ -64,7 +64,7 @@ const Home = () => {
         variants={fadeUp}
         initial="hidden"
         whileInView="show"
-        className="flex justify-center gap-10 mt-10 px-16"
+        className="flex flex-col lg:flex-row justify-center gap-10 mt-10 px-16"
       >
         {[
           {num: "150+", label: "Active Charging Stations"},
@@ -74,7 +74,7 @@ const Home = () => {
           <motion.div
             key={index}
             whileHover={{ scale: 1.12 }}
-            className="w-3/12 bg-white p-8 h-[200px] shadow-xl rounded-2xl  flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
+            className=" w-12/12 lg:w-3/12 bg-white p-8 h-[200px] shadow-xl rounded-2xl  flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
           >
             <h1 className="text-[55px] font-extrabold text-emerald-500">{i.num}</h1>
             <p className="text-gray-700 mt-2 text-sm">{i.label}</p>
@@ -85,14 +85,14 @@ const Home = () => {
 <EVSimulator />
 
       {/* ============== BOTTOM INFO SECTIONS ============== */}
-      <div className="flex justify-center mt-20 gap-8 px-16">
+      <div className="flex flex-col lg:flex-row justify-center mt-20 gap-8 px-16">
 
         {/* LEFT */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
           whileInView="show"
-          className="w-5/12 bg-[#F8F8F8] rounded-[40px] shadow-xl p-8"
+          className="w-12/12 lg:w-5/12 bg-[#F8F8F8] rounded-[40px] shadow-xl p-8"
         >
           <h2 className="text-[32px] font-bold text-gray-800">Power Up Your Life ⚡</h2>
 
@@ -116,7 +116,7 @@ const Home = () => {
           variants={fadeUp}
           initial="hidden"
           whileInView="show"
-          className="w-5/12 bg-[#A0F5CD] rounded-[40px] shadow-xl p-8"
+          className="w-12/12 lg:w-5/12 bg-[#A0F5CD] rounded-[40px] shadow-xl p-8"
         >
           <h2 className="text-[32px] font-bold text-gray-800">Effortless Trip Planning</h2>
 

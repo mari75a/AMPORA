@@ -27,7 +27,7 @@ const StationCard = ({ station }) => {
       {/* STATS */}
       <div className="grid grid-cols-4 text-center mt-6">
         <div>
-          <p className="text-gray-600 text-sm">Available Chargers</p>
+          <p className="text-gray-600 text-sm">Chargers</p>
           <p className="text-emerald-600 text-lg font-bold">
             {station.available}/{station.total}
           </p>
@@ -50,7 +50,7 @@ const StationCard = ({ station }) => {
       </div>
 
       {/* CHARGERS LIST */}
-      <div className="w-12/12 flex justify-center items-center">
+      <div className="w-12/12 flex justify-center items-center mt-5">
         <button className="p-2 w-6/12 border-2 border-b-emerald-500 bg-white ">Book now</button>
       </div>
 

@@ -31,6 +31,17 @@ const StationFinder = () => {
       renewable: 92,
       queue: 0,
     },
+    {
+      id: 2,
+      name: "Electric FastCharge",
+      address: "Galle Rd, Mount Lavinia",
+      lat: 6.8393,
+      lng: 79.9645,
+      available: 7,
+      total: 12,
+      renewable: 92,
+      queue: 0,
+    },
   ];
 
   const filteredStations = stations.filter((s) =>
@@ -57,7 +68,7 @@ const StationFinder = () => {
 
       {/* Banner */}
       <div className="w-full h-[30vh] bg-gradient-to-r from-emerald-300 to-emerald-500 rounded-b-[50px] flex justify-center items-center shadow-md">
-        <h1 className="text-5xl font-bold text-white drop-shadow-lg">
+        <h1 className="text-5xl font-bold text-white drop-shadow-lg text-center">
           Find Charging Stations ⚡
         </h1>
       </div>
@@ -75,10 +86,10 @@ const StationFinder = () => {
       </div>
 
       {/* Layout */}
-      <div className="w-10/12 mt-10 flex gap-6">
+      <div className="w-10/12 mt-10 flex flex-col lg:flex-row gap-6">
 
         {/* MAP SECTION */}
-        <div className="w-7/12 h-[75vh] bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="sm:w-12/12 md:w-12/12 lg:w-7/12 h-[75vh] bg-white rounded-3xl shadow-xl overflow-hidden">
           {!isLoaded ? (
             <p className="text-center mt-10 text-gray-500">Loading Map...</p>
           ) : (
@@ -99,7 +110,7 @@ const StationFinder = () => {
         </div>
 
         {/* STATION LIST */}
-        <div className="w-5/12 h-[75vh] overflow-y-scroll bg-white rounded-3xl shadow-xl p-5">
+        <div className="sm:w-12/12 md:w-12/12 lg:w-5/12 h-[75vh] overflow-y-scroll bg-white rounded-3xl shadow-xl p-5">
           <h2 className="text-2xl font-bold text-emerald-600 mb-4">
             Nearby Stations
           </h2>
@@ -125,7 +136,7 @@ const StationFinder = () => {
 
       {/* POPUP CARD WHEN MARKER CLICKED */}
       {selectedStation && (
-        <div className="fixed bottom-10 w-4/12 bg-white rounded-3xl shadow-2xl p-5 animate-slideUp border border-emerald-200">
+        <div className="fixed bottom-10 w-10/12 lg:w-4/12 bg-white rounded-3xl shadow-2xl p-5 animate-slideUp border border-emerald-200">
           <StationCard station={selectedStation} />
           <button
             onClick={() => setSelectedStation(null)}
