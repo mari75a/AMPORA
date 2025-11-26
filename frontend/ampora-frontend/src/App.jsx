@@ -9,6 +9,7 @@ import BookingsPage from "./pages/BookingsPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
 import UserDashboard from "./pages/UserDashboard.jsx";
 import Register from "./pages/Register.jsx";
+import Forget from "./pages/Forget.jsx";
 
 
 // Layout wrapper that hides navbar on certain pages
@@ -16,7 +17,7 @@ function AppLayout() {
   const location = useLocation();
 
   // Pages where navbar should be hidden
-  const hideNavbarPages = ["/login","/Register"];
+  const hideNavbarPages = ["/login","/Register","/forget"];
   const shouldHideNavbar = hideNavbarPages.includes(location.pathname);
 
   return (
@@ -27,6 +28,7 @@ function AppLayout() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/Register" element={<Register/>} />
+        <Route path="/forget" element={<Forget/>} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trip" element={<TripPlanner />} />
         <Route path="/stations" element={<StationFinder />} />
