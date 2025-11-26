@@ -7,7 +7,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen w-screen flex  flex-row overflow-hidden p-4 justify-center bg-[#EDFEFF] fixed top-0 right-0 left-0">
-     {/* <div className="w-full h-[700px] flex border rounded shadow-xl/30 bg-white"> */}
+     
      <div className="bg-[#EDFEFF] w-[900px] h-[700px] flex flex-row  shadow-xl/30 overflow-hidden">
       {/* =============Image============= */}
       <div className="w-1/2 h-full ">
@@ -76,7 +76,7 @@ export default function Register() {
             <span className=" text-white font-bold">Sing Up</span>
           </a>
           
-          {/* Divider */}
+     
           <div className="flex items-center mb-8 w-[200px]  ml-12 ">
             <hr className="flex-grow border-black" />
             <span className="mx-3 text-black">or</span>
