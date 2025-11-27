@@ -48,6 +48,8 @@ function AppLayout() {
 <Route path="/settings" element={<Settings />} />
 <Route path="/help" element={<HelpSupport />} />
       </Routes>
+      
+      {!shouldHideNavbar && <Footer />}
     </>
   );
 }
@@ -56,7 +58,8 @@ export default function App() {
   return (
     <Router>
       <AppLayout />
-      <Footer/>
+   
+      
     </Router>
   );
 }
