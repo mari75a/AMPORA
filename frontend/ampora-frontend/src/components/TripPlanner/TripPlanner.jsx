@@ -14,7 +14,7 @@ const containerStyle = { width: "100%", height: "100%" };
 
 export default function TripPlanner() {
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDgg91f6DBk5-6ugJ2i684WkRuyq5w5rcM",
+    googleMapsApiKey: "Google API KEY",
     libraries: ["places"],
   });
 
