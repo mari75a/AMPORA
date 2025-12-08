@@ -1,14 +1,47 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+:root {
+  --body-font: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --line-height: 1.5;
+  --font-weight-base: 400;
+
+  --color-bg-dark: #242424;
+  --color-text-dark: rgba(255, 255, 255, 0.87);
+
+  --color-bg-light: #ffffff;
+  --color-text-light: #213547;
+
+  --body-bg: var(--color-bg-dark);
+  --body-color: var(--color-text-dark);
+
+  font-family: var(--body-font);
+  line-height: var(--line-height);
+  font-weight: var(--font-weight-base);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --body-bg: var(--color-bg-light);
+    --body-color: var(--color-text-light);
+  }
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: var(--body-bg);
+  color: var(--body-color);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -20,14 +53,6 @@ a {
 }
 a:hover {
   color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -44,7 +69,7 @@ button {
   font-family: inherit;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, transform 0.15s;
 }
 button:hover {
   border-color: #646cff;
@@ -53,35 +78,40 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
-/* 🔋 Electric glowing input */
+
 .neon-input {
-  box-shadow: 0 0 10px #2EC770, inset 0 0 15px #ffffff;
+  box-shadow: 0 0 10px #2ec770, inset 0 0 15px #ffffff;
   transition: 0.3s;
 }
 .neon-input:focus {
-  box-shadow: 0 0 20px #2EC770, inset 0 0 20px #2EC770;
+  box-shadow: 0 0 20px #2ec770, inset 0 0 20px #2ec770;
 }
 
-/* ⚡ Neon border panel */
 .neon-border {
   position: absolute;
   inset: 0;
   border-radius: 50px;
   border: 3px solid rgba(46, 199, 112, 0.4);
-  box-shadow: 0 0 25px #2EC770;
+  box-shadow: 0 0 25px #2ec770;
   pointer-events: none;
 }
 
-/* ⚡ Glowing electric blocks */
 .glowing-block {
-  box-shadow: 0 0 15px #2EC770;
+  box-shadow: 0 0 15px #2ec770;
   animation: glowPulse 2s infinite ease-in-out;
 }
 @keyframes glowPulse {
-  0% { box-shadow: 0 0 10px #2EC770; }
-  50% { box-shadow: 0 0 25px #2EC770; }
-  100% { box-shadow: 0 0 10px #2EC770; }
+  0% {
+    box-shadow: 0 0 10px #2ec770;
+  }
+  50% {
+    box-shadow: 0 0 25px #2ec770;
+  }
+  100% {
+    box-shadow: 0 0 10px #2ec770;
+  }
 }
+
 @keyframes cableFlow {
   0% {
     stroke-dashoffset: 200;
@@ -91,69 +121,82 @@ button:focus-visible {
   }
 }
 @keyframes cableFlowMinimal {
-  0% { stroke-dashoffset: 180; }
-  100% { stroke-dashoffset: -180; }
+  0% {
+    stroke-dashoffset: 180;
+  }
+  100% {
+    stroke-dashoffset: -180;
+  }
 }
 .animate-cable-minimal {
   stroke-dasharray: 180;
   animation: cableFlowMinimal 2.5s linear infinite;
 }
-
-@keyframes plugBounceMinimal {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
-}
-.animate-plug-minimal {
-  animation: plugBounceMinimal 1.7s ease-in-out infinite;
-}
-
-
 .animate-cable {
   stroke-dasharray: 200;
   animation: cableFlow 3s linear infinite;
 }
 
+@keyframes plugBounceMinimal {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.animate-plug-minimal {
+  animation: plugBounceMinimal 1.7s ease-in-out infinite;
+}
+
 @keyframes plugBounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
     transform: translateY(-4px);
   }
 }
-
 .animate-plug {
   animation: plugBounce 1.8s ease-in-out infinite;
 }
 
-
-/* ⚡ Charging spark dots */
 .electric-spark {
   width: 12px;
   height: 12px;
-  background: #2EC770;
+  background: #2ec770;
   border-radius: 50%;
-  box-shadow: 0 0 15px #2EC770;
+  box-shadow: 0 0 15px #2ec770;
   animation: spark 1s infinite alternate;
 }
 @keyframes spark {
-  from { transform: scale(1); opacity: 0.8; }
-  to { transform: scale(1.8); opacity: 0.3; }
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0.3;
+  }
 }
 
-/* ⚡ Moving energy wave */
 .electric-wave {
-  background: linear-gradient(90deg, #2EC770, transparent);
+  background: linear-gradient(90deg, #2ec770, transparent);
   animation: waveMove 2s linear infinite;
 }
 @keyframes waveMove {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
-/* ⚡ Electric button */
 .electric-btn {
-  border: 2px solid #2EC770;
+  border: 2px solid #2ec770;
   background: white;
   padding: 10px 18px;
   border-radius: 12px;
@@ -161,52 +204,47 @@ button:focus-visible {
   font-weight: bold;
 }
 .electric-btn:hover {
-  box-shadow: 0 0 15px #2EC770;
+  box-shadow: 0 0 15px #2ec770;
   transform: translateY(-3px);
 }
 
-/* ⚡ Charging icon glow */
 .charging-icon {
-  filter: drop-shadow(0 0 8px #2EC770);
+  filter: drop-shadow(0 0 8px #2ec770);
 }
 
-/* ⚡ Stats card */
 .stat-card {
   box-shadow: 0 0 10px rgba(46, 199, 112, 0.3);
 }
-
-/* ⚡ Feature neon cards */
 .neon-card {
   box-shadow: 0 0 15px rgba(46, 199, 112, 0.25);
 }
+
 .electric-line {
   width: 60%;
   height: 5px;
   background: linear-gradient(
     90deg,
     transparent,
-    #2EC770,
+    #2ec770,
     #7fffd4,
-    #2EC770,
+    #2ec770,
     transparent
   );
   background-size: 200%;
   animation: electricFlow 2s linear infinite;
-  filter: drop-shadow(0 0 8px #2EC770);
+  filter: drop-shadow(0 0 8px #2ec770);
   border-radius: 6px;
 }
-
 @keyframes electricFlow {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
-
 @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
   a:hover {
     color: #747bff;
   }
@@ -215,15 +253,15 @@ button:focus-visible {
   }
 }
 
-
 .loading-container {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
-  background: #ECFFFA;
+  background: #ecfffa;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .logo-wrapper {
@@ -231,39 +269,47 @@ button:focus-visible {
   width: 130px;
   height: 130px;
 }
-
 .ampora-logo {
   width: 100%;
   height: 100%;
   animation: rotateLogo 2.5s linear infinite;
 }
-
 @keyframes rotateLogo {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .pulse-ring {
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   width: 130px;
   height: 130px;
-  border: 3px solid #00E5A8;
+  border: 3px solid #00e5a8;
   border-radius: 50%;
   transform: translate(-50%, -50%);
   animation: pulse 1.6s ease-out infinite;
   opacity: 0.5;
 }
-
 @keyframes pulse {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
 }
 
 .loading-text {
   margin-top: 25px;
   font-size: 1.2rem;
-  color: #007A68;
+  color: #007a68;
   font-weight: 600;
   letter-spacing: 1px;
 }
