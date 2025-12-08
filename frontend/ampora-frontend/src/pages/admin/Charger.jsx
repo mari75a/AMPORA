@@ -1,29 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import {
-  fetchSessions,
-  createSession,
-  updateSession,
-  deleteSession,
-} from "./api/chargerSession.jsx";
+  fetchChargers,
+  createCharger,
+  updateCharger,
+  deleteCharger,
+} from "./api/chargerService";
 
-export default function Payment() {
-  const [sessions, setSessions] = useState([]);
+export default function ChargerPage() {
+  const [chargers, setChargers] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingSessionId, setEditingSessionId] = useState(null);
+  const [editingChargerId, setEditingChargerId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   const [form, setForm] = useState({
-    userId: "",
-    chargerId: "",
-    energyUsedKwh: "",
-    cost: "",
-    startTime: "",
-    endTime: "",
-    sessionStatus: "",
+    type: "",
+    powerKw: "",
+    status: "",
+    stationId: "",
   });
 
   useEffect(() => {
@@ -31,11 +28,11 @@ export default function Payment() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchSessions();
-        setSessions(data || []);
+        const data = await fetchChargers();
+        setChargers(data || []);
       } catch (err) {
         console.error(err);
-        setError(err.message || "Failed to load charging sessions");
+        setError(err.message || "Failed to load chargers");
       } finally {
         setLoading(false);
       }
@@ -43,132 +40,113 @@ export default function Payment() {
     load();
   }, []);
 
-  // Stats
-  const totalSessions = sessions.length;
-  const totalEnergy = sessions.reduce(
-    (sum, s) => sum + Number(s.energyUsedKwh || 0),
+  const totalChargers = chargers.length;
+  const totalPower = chargers.reduce(
+    (sum, c) => sum + Number(c.powerKw || 0),
     0
   );
-  const totalRevenue = sessions.reduce(
-    (sum, s) => sum + Number(s.cost || 0),
-    0
-  );
-  const ongoingSessions = sessions.filter(
-    (s) => s.sessionStatus === "ONGOING"
+  const availableChargers = chargers.filter(
+    (c) => c.status === "AVAILABLE"
   ).length;
-  const completedSessions = sessions.filter(
-    (s) => s.sessionStatus === "COMPLETED"
-  ).length;
+  const inUseChargers = chargers.filter((c) => c.status === "IN_USE").length;
 
-  // Filter
-  const filteredSessions = useMemo(() => {
+  // Filter (search by chargerID, type, stationName, status)
+  const filteredChargers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return sessions;
+    if (!term) return chargers;
 
-    return sessions.filter((s) => {
-      const idStr = String(s.sessionId || s.id || "").toLowerCase();
+    return chargers.filter((c) => {
+      const id = String(c.chargerID || c.chargerId || "").toLowerCase();
       return (
-        idStr.includes(term) ||
-        s.userId?.toLowerCase().includes(term) ||
-        s.chargerId?.toLowerCase().includes(term)
+        id.includes(term) ||
+        c.type?.toLowerCase().includes(term) ||
+        c.status?.toLowerCase().includes(term) ||
+        c.stationName?.toLowerCase().includes(term)
       );
     });
-  }, [sessions, searchTerm]);
+  }, [searchTerm, chargers]);
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const openAddModal = () => {
-    setEditingSessionId(null);
+    setEditingChargerId(null);
     setForm({
-      userId: "",
-      chargerId: "",
-      energyUsedKwh: "",
-      cost: "",
-      startTime: "",
-      endTime: "",
-      sessionStatus: "",
+      type: "",
+      powerKw: "",
+      status: "",
+      stationId: "",
     });
     setShowModal(true);
   };
 
-  const openEditModal = (session) => {
-    setEditingSessionId(session.sessionId || session.id);
+  const openEditModal = (charger) => {
+    const id = charger.chargerID || charger.chargerId;
+    setEditingChargerId(id);
     setForm({
-      userId: session.userId || "",
-      chargerId: session.chargerId || "",
-      energyUsedKwh: session.energyUsedKwh ?? "",
-      cost: session.cost ?? "",
-      startTime: session.startTime ? session.startTime.slice(0, 16) : "",
-      endTime: session.endTime ? session.endTime.slice(0, 16) : "",
-      sessionStatus: session.sessionStatus || "",
+      type: charger.type || "",
+      powerKw: charger.powerKw ?? "",
+      status: charger.status || "",
+      // if backend also returns stationId, this will fill it, otherwise user can type
+      stationId: charger.stationId || "",
     });
     setShowModal(true);
   };
 
-  const saveSession = async () => {
+  const saveCharger = async () => {
     try {
       setSaving(true);
       setError(null);
 
       const payload = {
-        userId: form.userId,
-        chargerId: form.chargerId,
-        energyUsedKwh:
-          form.energyUsedKwh === "" ? 0 : Number(form.energyUsedKwh),
-        cost: form.cost === "" ? 0 : Number(form.cost),
-        startTime: form.startTime
-          ? form.startTime.length === 16
-            ? form.startTime + ":00"
-            : form.startTime
-          : null,
-        endTime: form.endTime
-          ? form.endTime.length === 16
-            ? form.endTime + ":00"
-            : form.endTime
-          : null,
-        sessionStatus: form.sessionStatus,
+        type: form.type,
+        powerKw: form.powerKw === "" ? 0 : Number(form.powerKw),
+        status: form.status,
+        stationId: form.stationId,
       };
 
-      if (editingSessionId === null) {
-        await createSession(payload);
+      if (editingChargerId === null) {
+        // CREATE
+        await createCharger(payload);
       } else {
-        await updateSession(editingSessionId, payload);
+        // UPDATE
+        await updateCharger(editingChargerId, payload);
       }
 
-      const data = await fetchSessions();
-      setSessions(data || []);
+      const data = await fetchChargers();
+      setChargers(data || []);
 
       setShowModal(false);
-      setEditingSessionId(null);
+      setEditingChargerId(null);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to save charging session");
+      setError(err.message || "Failed to save charger");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (sessionId) => {
+  const handleDelete = async (chargerId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this charging session?"
+      "Are you sure you want to delete this charger?"
     );
     if (!confirmed) return;
 
     try {
-      await deleteSession(sessionId);
-      setSessions((prev) =>
-        prev.filter((s) => (s.sessionId || s.id) !== sessionId)
+      await deleteCharger(chargerId);
+      setChargers((prev) =>
+        prev.filter((c) => (c.chargerID || c.chargerId) !== chargerId)
       );
     } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to delete charging session");
+      setError(err.message || "Failed to delete charger");
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
       <div className="max-w-7xl mx-auto">
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
             <div className="flex items-center gap-4">
@@ -177,10 +155,10 @@ export default function Payment() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">
-                  Total Sessions
+                  Total Chargers
                 </p>
                 <p className="text-2xl font-bold text-gray-800">
-                  {totalSessions}
+                  {totalChargers}
                 </p>
               </div>
             </div>
@@ -192,11 +170,9 @@ export default function Payment() {
                 <div className="w-6 h-6 bg-green-500 rounded-lg"></div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  Total Energy Used
-                </p>
+                <p className="text-xs text-gray-500 font-medium">Total Power</p>
                 <p className="text-2xl font-bold text-gray-800">
-                  {totalEnergy.toFixed(2)} <span className="text-sm">kWh</span>
+                  {totalPower.toFixed(1)} kW
                 </p>
               </div>
             </div>
@@ -209,10 +185,10 @@ export default function Payment() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium">
-                  Total Revenue
+                  Available Chargers
                 </p>
                 <p className="text-2xl font-bold text-gray-800">
-                  Rs. {totalRevenue.toFixed(2)}
+                  {availableChargers}
                 </p>
               </div>
             </div>
@@ -224,27 +200,24 @@ export default function Payment() {
                 <div className="w-6 h-6 bg-orange-500 rounded-lg"></div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">
-                  Ongoing / Completed
-                </p>
+                <p className="text-xs text-gray-500 font-medium">In Use</p>
                 <p className="text-2xl font-bold text-gray-800">
-                  {ongoingSessions} / {completedSessions}
+                  {inUseChargers}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Charging Sessions
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-800">Chargers</h2>
 
             <div className="flex items-center gap-3">
               <input
                 type="text"
-                placeholder="Search by session, user, charger..."
+                placeholder="Search by charger, type, station..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
@@ -253,13 +226,13 @@ export default function Payment() {
                 onClick={openAddModal}
                 className="addBtn px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
               >
-                <Plus size={20} /> Add Session
+                <Plus size={20} /> Add Charger
               </button>
             </div>
           </div>
 
           {loading && (
-            <div className="p-4 text-sm text-gray-500">Loading sessions...</div>
+            <div className="p-4 text-sm text-gray-500">Loading chargers...</div>
           )}
           {error && <div className="p-4 text-sm text-red-500">{error}</div>}
 
@@ -268,28 +241,19 @@ export default function Payment() {
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Session ID
+                    ID
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    User
+                    Type
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Charger
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Energy (kWh)
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Cost
+                    Power (kW)
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
                     Status
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Start Time
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                    End Time
+                    Station
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">
                     Actions
@@ -297,51 +261,42 @@ export default function Payment() {
                 </tr>
               </thead>
               <tbody>
-                {filteredSessions.map((s) => {
-                  const id = s.sessionId || s.id;
+                {filteredChargers.map((c) => {
+                  const id = c.chargerID || c.chargerId;
                   return (
                     <tr
                       key={id}
                       className="border-b border-gray-50 hover:bg-gray-50 transition"
                     >
                       <td className="px-6 py-4 text-sm text-gray-600">{id}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {s.userId}
+                      <td className="px-6 py-4 text-sm font-medium text-gray-800">
+                        {c.type}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {s.chargerId}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {s.energyUsedKwh}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        Rs. {s.cost}
+                        {c.powerKw}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <span
                           className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                            s.sessionStatus === "ONGOING"
-                              ? "bg-blue-100 text-blue-700"
-                              : s.sessionStatus === "COMPLETED"
+                            c.status === "AVAILABLE"
                               ? "bg-green-100 text-green-700"
-                              : s.sessionStatus === "FAILED"
+                              : c.status === "IN_USE"
+                              ? "bg-blue-100 text-blue-700"
+                              : c.status === "OFFLINE"
                               ? "bg-red-100 text-red-700"
                               : "bg-gray-100 text-gray-700"
                           }`}
                         >
-                          {s.sessionStatus}
+                          {c.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {s.startTime}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {s.endTime}
+                        {c.stationName}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => openEditModal(s)}
+                            onClick={() => openEditModal(c)}
                             className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                           >
                             <Pencil size={16} />
@@ -358,13 +313,13 @@ export default function Payment() {
                   );
                 })}
 
-                {!loading && filteredSessions.length === 0 && (
+                {!loading && filteredChargers.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={6}
                       className="px-6 py-6 text-center text-sm text-gray-500"
                     >
-                      No charging sessions found.
+                      No chargers found.
                     </td>
                   </tr>
                 )}
@@ -380,9 +335,7 @@ export default function Payment() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-800">
-                {editingSessionId !== null
-                  ? "Edit Charging Session"
-                  : "Add New Charging Session"}
+                {editingChargerId !== null ? "Edit Charger" : "Add New Charger"}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -393,64 +346,48 @@ export default function Payment() {
             </div>
 
             <div className="p-6 space-y-4">
-              <input
-                name="userId"
-                placeholder="User ID"
-                value={form.userId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
-                name="chargerId"
-                placeholder="Charger ID"
-                value={form.chargerId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
-                name="energyUsedKwh"
-                type="number"
-                step="0.01"
-                placeholder="Energy Used (kWh)"
-                value={form.energyUsedKwh}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
-                name="cost"
-                type="number"
-                step="0.01"
-                placeholder="Cost"
-                value={form.cost}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
-                name="startTime"
-                type="datetime-local"
-                value={form.startTime}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
-                name="endTime"
-                type="datetime-local"
-                value={form.endTime}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
               <select
-                name="sessionStatus"
-                value={form.sessionStatus}
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              >
+                <option value="">Select Type</option>
+                <option value="AC_SLOW">AC_SLOW</option>
+                <option value="AC_FAST">AC_FAST</option>
+                <option value="DC_FAST">DC_FAST</option>
+              </select>
+
+              <input
+                name="powerKw"
+                type="number"
+                step="0.1"
+                placeholder="Power (kW)"
+                value={form.powerKw}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
+
+              <select
+                name="status"
+                value={form.status}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               >
                 <option value="">Select Status</option>
-                <option value="ONGOING">ONGOING</option>
-                <option value="COMPLETED">COMPLETED</option>
-                <option value="FAILED">FAILED</option>
-                <option value="CANCELLED">CANCELLED</option>
+                <option value="AVAILABLE">AVAILABLE</option>
+                <option value="IN_USE">IN_USE</option>
+                <option value="OFFLINE">OFFLINE</option>
+                <option value="MAINTENANCE">MAINTENANCE</option>
               </select>
+
+              <input
+                name="stationId"
+                placeholder="Station ID"
+                value={form.stationId}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
             </div>
 
             <div className="p-6 border-t border-gray-100 flex gap-3">
@@ -462,15 +399,15 @@ export default function Payment() {
                 Cancel
               </button>
               <button
-                onClick={saveSession}
+                onClick={saveCharger}
                 className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
                 disabled={saving}
               >
                 {saving
                   ? "Saving..."
-                  : editingSessionId !== null
-                  ? "Update Session"
-                  : "Add Session"}
+                  : editingChargerId !== null
+                  ? "Update Charger"
+                  : "Add Charger"}
               </button>
             </div>
           </div>

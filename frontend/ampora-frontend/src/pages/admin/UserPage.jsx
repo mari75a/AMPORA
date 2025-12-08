@@ -219,7 +219,7 @@ export default function UserPage() {
               />
               <button
                 onClick={openAddModal}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
+                className="addBtn px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
               >
                 <UserPlus size={20} /> Add User
               </button>

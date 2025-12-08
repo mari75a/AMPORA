@@ -1,0 +1,33 @@
+.addBtn {
+  background-color: #10b981; /* ✅ green */
+  color: #111827;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background-color: #22c55e; /* ✅ green */
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 15px rgba(34, 197, 94, 0.3);
+}
+
+.admin-navbar button,
+.admin-navbar a {
+  color: white !important;
+}
+
+.admin-navbar button:hover {
+  opacity: 0.85;
+}
+
+.admin-navbar .nav-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.admin-navbar .nav-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}

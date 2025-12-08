@@ -208,7 +208,6 @@ export default function ChargerStationPage() {
           </div>
         </div>
 
-        {/* Table Section */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800">
@@ -224,7 +223,7 @@ export default function ChargerStationPage() {
               />
               <button
                 onClick={openAddModal}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
+                className="addBtn px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
               >
                 <Plus size={20} /> Add Station
               </button>

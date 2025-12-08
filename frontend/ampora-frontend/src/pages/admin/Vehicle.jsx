@@ -246,7 +246,7 @@ export default function Vehicle() {
 
               <button
                 onClick={openAddModal}
-                className="px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
+                className="addBtn px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
               >
                 <Plus size={20} /> Add Vehicle
               </button>
