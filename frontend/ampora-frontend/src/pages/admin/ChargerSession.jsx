@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { fetchChargers } from "./api/chargerService.jsx";
+import { fetchUser } from "./api/userService.jsx";
 import {
   fetchSessions,
   createSession,
   updateSession,
   deleteSession,
 } from "./api/chargerSession.jsx";
+import Modal from "./component/Modal.jsx";
 
 export default function Payment() {
   const [sessions, setSessions] = useState([]);
@@ -15,6 +18,8 @@ export default function Payment() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [chargers, setChargers] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const [form, setForm] = useState({
     userId: "",
@@ -165,6 +170,38 @@ export default function Payment() {
       setError(err.message || "Failed to delete charging session");
     }
   };
+  useEffect(() => {
+    const loadChargers = async () => {
+      try {
+        const data = await fetchChargers();
+        setChargers(data || []);
+      } catch (err) {
+        console.error("Failed to load chargers:", err);
+      }
+    };
+    loadChargers();
+  }, []);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const data = await fetchUser();
+        setUsers(data || []);
+      } catch (err) {
+        console.error("Failed to load users:", err);
+      }
+    };
+    loadUsers();
+  }, []);
+  const uniqueStations = useMemo(() => {
+    const seen = new Set();
+
+    return chargers.filter((c) => {
+      if (seen.has(c.stationName)) return false;
+      seen.add(c.stationName);
+      return true;
+    });
+  }, [chargers]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
@@ -374,108 +411,143 @@ export default function Payment() {
         </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">
-                {editingSessionId !== null
-                  ? "Edit Charging Session"
-                  : "Add New Charging Session"}
-              </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <input
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={
+          editingSessionId ? "Edit Charging Session" : "Add Charging Session"
+        }
+        footer={
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveSession}
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition"
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        }
+      >
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                User ID
+              </label>
+              <select
                 name="userId"
-                placeholder="User ID"
                 value={form.userId}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              >
+                <option value="">Select User</option>
+                {users
+                  .filter((user) => user.role === "USER")
+                  .map((user) => (
+                    <option key={user.userId} value={user.userId}>
+                      {user.fullName}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Charger ID
+              </label>
+              <select
                 name="chargerId"
-                placeholder="Charger ID"
                 value={form.chargerId}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              >
+                <option value="">Select Charger</option>
+
+                {uniqueStations.map((c) => (
+                  <option key={c.chargerId} value={c.chargerId}>
+                    {c.stationName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Energy Used (kWh)
+              </label>
               <input
-                name="energyUsedKwh"
                 type="number"
-                step="0.01"
-                placeholder="Energy Used (kWh)"
+                name="energyUsedKwh"
                 value={form.energyUsedKwh}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cost
+              </label>
               <input
-                name="cost"
                 type="number"
-                step="0.01"
-                placeholder="Cost"
+                name="cost"
                 value={form.cost}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Time
+              </label>
               <input
-                name="startTime"
                 type="datetime-local"
+                name="startTime"
                 value={form.startTime}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Time
+              </label>
               <input
-                name="endTime"
                 type="datetime-local"
+                name="endTime"
                 value={form.endTime}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Session Status
+              </label>
               <select
                 name="sessionStatus"
                 value={form.sessionStatus}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               >
                 <option value="">Select Status</option>
                 <option value="ONGOING">ONGOING</option>
                 <option value="COMPLETED">COMPLETED</option>
                 <option value="FAILED">FAILED</option>
-                <option value="CANCELLED">CANCELLED</option>
               </select>
-            </div>
-
-            <div className="p-6 border-t border-gray-100 flex gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveSession}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
-                disabled={saving}
-              >
-                {saving
-                  ? "Saving..."
-                  : editingSessionId !== null
-                  ? "Update Session"
-                  : "Add Session"}
-              </button>
             </div>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

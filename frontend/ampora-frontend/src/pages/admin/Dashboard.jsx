@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Plug,
@@ -14,6 +15,7 @@ import {
 
 export default function Dashboard() {
   const [selectedPeriod] = useState("week");
+  const navigate = useNavigate();
 
   const stats = useMemo(
     () => [
@@ -57,9 +59,12 @@ export default function Dashboard() {
         gradient: "from-emerald-400 to-emerald-500",
       },
       {
+        key: "add-charger",
         label: "Add Charger",
         icon: Plug,
         gradient: "from-green-400 to-green-500",
+        onClick: () =>
+          navigate("/admin/charger", { state: { openAddModal: true } }),
       },
       {
         label: "View Payments",

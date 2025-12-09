@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import {
   fetchChargers,
   createCharger,
@@ -10,6 +11,7 @@ import Modal from "./component/Modal";
 import { fetchStations } from "./api/stationService";
 
 export default function ChargerPage() {
+  const location = useLocation();
   const [chargers, setChargers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingChargerId, setEditingChargerId] = useState(null);
@@ -162,6 +164,12 @@ export default function ChargerPage() {
     };
     loads();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.openAddModal) {
+      openAddModal();
+    }
+  }, [location.state]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
