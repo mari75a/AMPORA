@@ -12,8 +12,8 @@ import TripPlanner from "./components/TripPlanner/TripPlanner.jsx";
 import StationFinder from "./pages/StationFinder.jsx";
 import BookingsPage from "./pages/BookingsPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
-import UserDashboard from "./pages/UserDashboard.jsx";
-import UserProfile from "./pages/UserProfile.jsx";
+import UserDashboard from "./pages/user/UserDashboard.jsx";
+import UserProfile from "./pages/user/UserProfile.jsx";
 import VehicleManager from "./pages/VehicleManager.jsx";
 import StationDetails from "./pages/StationDetails.jsx";
 import Notifications from "./pages/Notifications.jsx";
@@ -41,6 +41,7 @@ import AdminUserpage from "./pages/admin/UserPage.jsx";
 import AdminVehicle from "./pages/admin/Vehicle.jsx";
 
 import AdminLayout from "./components/Layout.jsx";
+import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import ChargerPage from "./pages/admin/Charger.jsx";
 import Subscription from "./pages/admin/Subscription.jsx";
 
@@ -82,6 +83,8 @@ function AppLayout() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<HelpSupport />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardpage />} />
             <Route path="dashboard" element={<AdminDashboardpage />} />{" "}

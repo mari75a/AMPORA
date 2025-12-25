@@ -187,8 +187,8 @@ export default function Vehicle() {
   }, [showModal]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 my-20">
+      <div className="max-w-7xl ">
         {/* Error / Loading */}
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

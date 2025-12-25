@@ -9,7 +9,7 @@ const fadeUp = {
 
 const HeroSection = () => {
   return (
-    <div className="relative w-screen h-[90vh] overflow-hidden">
+    <div className="relative w-screen  mt-15  h-[90vh] overflow-hidden">
       
       
       <video

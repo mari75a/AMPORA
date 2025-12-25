@@ -139,7 +139,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen  overflow-x-hidden bg-gradient-to-br from-gray-50 to-green-50 p-4 md:p-8">
+    <div className="min-h-screen   overflow-x-hidden bg-gradient-to-br from-gray-50 to-green-50 p-4 my-20 md:p-8">
       <div className="  mx-auto space-y-6 min-w-0">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-w-0">
           <div className="min-w-0">

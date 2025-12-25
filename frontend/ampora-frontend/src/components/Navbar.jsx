@@ -10,32 +10,26 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const fadeUp = {
-    hidden: { opacity: 0, y: 12 },
-    show: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.08, duration: 0.5, ease: "easeOut" },
-    }),
-  };
-
   return (
-    <header className="bg-black backdrop-blur-md fixed top-0 w-full z-50 shadow-md border-b border-black/30">
-      <div className="w-screen px-4 md:px-8 py-4 flex items-center justify-between">
+    <header className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+
+        {/* ================= LOGO ================= */}
         <div className="flex items-center gap-3 select-none">
-          <img src={logo} alt="Logo" className="w-[50px]" />
+          <img src={logo} alt="Logo" className="w-10 h-10" />
 
           <motion.div
             initial="hidden"
             animate="show"
-            className="flex text-2xl font-extrabold tracking-wide"
+            className="flex text-xl font-extrabold tracking-wide"
           >
             {letters.map((letter, i) => (
               <motion.span
                 key={i}
-                custom={i}
-                variants={fadeUp}
-                className="text-white drop-shadow transition"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
+                className="text-white"
               >
                 {letter}
               </motion.span>
@@ -43,12 +37,12 @@ export default function Navbar() {
           </motion.div>
         </div>
 
-        {/* Desktop Menu */}
-        <nav className="hidden md:flex gap-8 font-medium">
+        {/* ================= DESKTOP NAV ================= */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
           {[
             ["Home", "/"],
             ["Trip Planner", "/trip"],
-            ["Station", "/stations"],
+            ["Stations", "/stations"],
             ["Bookings", "/bookings"],
             ["Payments", "/payments"],
             ["Dashboard", "/user-dashboard"],
@@ -56,46 +50,58 @@ export default function Navbar() {
             <a
               key={name}
               href={link}
-              className="text-white hover:text-white/80"
+              className="relative text-white/80 hover:text-white transition
+                         after:absolute after:left-0 after:-bottom-1
+                         after:w-0 after:h-[2px] after:bg-[#00d491]
+                         hover:after:w-full after:transition-all"
             >
-              <span className="text-white hover:text-white/80">{name}</span>
+              {name}
             </a>
           ))}
         </nav>
 
-        {/* Desktop Right Side */}
-        <div className="hidden md:flex items-center gap-6vtext-white">
-          {/* App Download Button */}
+        {/* ================= ACTIONS ================= */}
+        <div className="hidden md:flex items-center gap-4">
+
+          {/* App Button */}
           <a
             href="#"
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/30 backdrop-blur hover:bg-white/20 transition text-white text-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-full
+                       bg-white/10 border border-white/20
+                       hover:bg-white/20 transition text-white text-sm"
           >
-            <FaGooglePlay className="text-sm" />
-            <FaAppStoreIos className="text-sm" />
-            <span className="text-white">App</span>
+            <FaGooglePlay />
+            <FaAppStoreIos />
+            <span>App</span>
           </a>
 
-          {/* Profile Avatar */}
-          <div className="relative ">
+          {/* Profile */}
+          <div className="relative">
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="w-10 h-10 rounded-full   border border-green-500 flex items-center justify-center"
+              className="w-10 h-10 rounded-full border border-[#00d491]
+                         flex items-center justify-center
+                         hover:bg-[#00d491]/10 transition"
             >
-              <FiUser className="text-white text-xl" />
+              <FiUser className="text-white text-lg" />
             </button>
 
-            {/* Profile Dropdown */}
             {profileOpen && (
-              <div className="absolute right-0 mt-3 w-48 bg-white/95 backdrop-blur-xl shadow-lg rounded-xl py-2 text-gray-700">
+              <div
+                className="absolute right-0 mt-3 w-52 rounded-2xl
+                           bg-white shadow-xl overflow-hidden"
+              >
                 <a
                   href="/user-dashboard"
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100"
+                  className="flex items-center gap-3 px-4 py-3
+                             hover:bg-gray-100 text-gray-700"
                 >
                   <FiSettings /> Profile Settings
                 </a>
                 <a
                   href="/logout"
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100"
+                  className="flex items-center gap-3 px-4 py-3
+                             hover:bg-gray-100 text-gray-700"
                 >
                   <FiLogOut /> Logout
                 </a>
@@ -104,8 +110,11 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile menu trigger */}
-        <button className="md:hidden text-white" onClick={() => setOpen(!open)}>
+        {/* ================= MOBILE TOGGLE ================= */}
+        <button
+          className="md:hidden text-white"
+          onClick={() => setOpen(!open)}
+        >
           <svg
             className="w-8 h-8"
             fill="none"
@@ -129,11 +138,10 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ================= MOBILE MENU ================= */}
       {open && (
-        <div className="md:hidden bg-white px-6 pb-4 shadow-lg">
-          {/* Mobile nav links */}
-          <nav className="flex flex-col gap-4 text-gray-700 font-medium">
+        <div className="md:hidden bg-black/95 backdrop-blur-xl px-6 pb-6 border-t border-white/10">
+          <nav className="flex flex-col gap-4 text-white/90 mt-4">
             <a href="/">Home</a>
             <a href="/trip">Trip Planner</a>
             <a href="/stations">Stations</a>
@@ -142,24 +150,13 @@ export default function Navbar() {
             <a href="/user-dashboard">Dashboard</a>
           </nav>
 
-          {/* Mobile App Download */}
-          <div className="flex gap-3 mt-4">
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+          <div className="flex gap-3 mt-6">
+            <button className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl text-white">
               <FaGooglePlay /> Android
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+            <button className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl text-white">
               <FaAppStoreIos /> iOS
             </button>
-          </div>
-
-          {/* Mobile Profile */}
-          <div className="mt-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-              <FiUser className="text-gray-600 text-xl" />
-            </div>
-            <a href="/user-dashboard" className="text-gray-700">
-              Profile
-            </a>
           </div>
         </div>
       )}
