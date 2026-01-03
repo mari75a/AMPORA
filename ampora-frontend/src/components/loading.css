@@ -1,0 +1,53 @@
+.loader-container {
+  position: fixed;
+  inset: 0;
+  background-color: black; /* dark clean background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loader-wrapper {
+  position: relative;
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.loader-logo {
+  width: 120px;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 12px rgba(0, 255, 180, 0.2));
+  animation: pulse 2.2s ease-in-out infinite;
+}
+
+.loader-glow {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    rgba(0, 255, 180, 0.2),
+    rgba(0, 255, 180, 0)
+  );
+  animation: glowPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.92); opacity: 0.8; }
+  50% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0.8; }
+}
+
+@keyframes glowPulse {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
+  50% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.4; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
