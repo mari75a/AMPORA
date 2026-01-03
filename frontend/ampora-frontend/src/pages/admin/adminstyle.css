@@ -1,0 +1,107 @@
+.addBtn {
+  background-color: #10b981; /* ✅ green */
+  color: #111827;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background-color: #22c55e;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 15px rgba(34, 197, 94, 0.3);
+}
+
+.admin-navbar button,
+.admin-navbar a {
+  color: white !important;
+}
+
+.admin-navbar button:hover {
+  opacity: 0.85;
+}
+
+.admin-navbar .nav-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.admin-navbar .nav-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.bell-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 8px;
+}
+
+.bell-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-navbar .group button {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+
+  color: white !important;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: color 0.25s ease;
+}
+
+.admin-navbar .group button:hover {
+  color: white !important;
+  text-shadow: none !important;
+}
+
+.admin-navbar .group svg {
+  margin-top: 1px;
+  font-size: 14px;
+}
+
+.admin-navbar .group {
+  display: flex;
+  align-items: center;
+}
+
+.sbe {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.sbe:hover {
+  background-color: #fee2e2;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(220, 38, 38, 0.2);
+}
+
+.sbd {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.sbd:hover {
+  background-color: #dbeafe;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.2);
+}

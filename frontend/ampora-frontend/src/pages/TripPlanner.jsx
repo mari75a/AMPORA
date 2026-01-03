@@ -1,123 +1,154 @@
 import React, { useState } from "react";
+import MapView from "./MapView";
+import RouteSummary from "./RouteSummary";
+import calculateEnergy from "./EnergyCalculator";
+import icon1 from "../../assets/placeholder.png";
+import HeroBanner from "../components/TripPlanner/HeroBanner";
 
-export default function TripPlanner() {
-  const [start, setStart] = useState("");
+const TripPlanner = () => {
+  const [currentLocation, setCurrentLocation] = useState("");
   const [destination, setDestination] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [battery, setBattery] = useState("");
 
-  const palette = {
-    vibrant: "#00FF9A",
-    dark: "#159E5C",
-  };
+  const [stops, setStops] = useState([{ id: 1, location: "" }]);
+  const [routeData, setRouteData] = useState(null);
+  const [stations, setStations] = useState([]);
+  const [energy, setEnergy] = useState(null);
 
-  const handlePlanTrip = () => {
-    if (!start || !destination) return alert("Please fill both fields!");
+  const handleRouteCalculated = (data) => {
+    setRouteData(data);
+    const totalDistance = data?.totalDistanceKm || 0;
 
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      alert("AI Powered Trip Optimization Complete!");
-    }, 1200);
+    const energyUsage = calculateEnergy(totalDistance, 0.18);
+    setEnergy(energyUsage);
+
+    setStations([
+      { id: 1, name: "Ampora Station 1", distance: 1.2, status: "Available" },
+      { id: 2, name: "Ampora Station 2", distance: 3.7, status: "Busy" },
+      { id: 3, name: "Ampora Station 3", distance: 5.1, status: "Available" },
+    ]);
   };
 
   return (
-    <div className="bg-gray-50 w-screen min-h-screen pb-20">
-      {/* Header */}
-      <div className="text-center pt-10">
-        <h1 className="text-4xl font-extrabold text-gray-800">
-          Plan Your Smart EV Trip
-        </h1>
-        <p className="mt-2 text-gray-600">
-          AI-powered route optimization with charging station predictions
-        </p>
-      </div>
+    <div className="w-screen min-h-screen flex flex-col items-center bg-[#ECFFFA]">
 
-      {/* Form Container */}
-      <div className="max-w-4xl mx-auto mt-12 bg-white shadow-xl rounded-2xl p-8">
-        <h2 className="text-2xl font-bold text-gray-700 mb-6">Trip Details</h2>
+      {/* 🌈 HERO BANNER */}
+      <HeroBanner />
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Start Location */}
-          <div>
-            <label className="text-gray-700 font-medium">Start Location</label>
+      {/* 🚗 ROUTE INPUT PANEL */}
+      <div className="w-10/12 bg-white rounded-3xl shadow-[0_8px_35px_rgba(0,0,0,0.08)] px-10 py-8 mt-[-50px] border border-emerald-100 backdrop-blur-xl">
+
+        <h2 className="text-2xl font-bold text-emerald-700 mb-5">
+          Enter Trip Details
+        </h2>
+
+        {/* INPUT GRID */}
+        <div className="grid grid-cols-3 gap-6">
+
+          {/* Current Location */}
+          <div className="flex flex-col">
+            <label className="text-emerald-700 font-semibold mb-2">
+              Current Location
+            </label>
             <input
               type="text"
-              placeholder="Enter starting point"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="w-full mt-2 px-4 py-3 rounded-lg border focus:outline-none focus:ring-2"
-              style={{ borderColor: palette.vibrant }}
+              value={currentLocation}
+              onChange={(e) => setCurrentLocation(e.target.value)}
+              placeholder="Colombo, Sri Lanka"
+              className="p-3 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 text-black outline-none shadow-sm"
             />
           </div>
 
           {/* Destination */}
-          <div>
-            <label className="text-gray-700 font-medium">Destination</label>
+          <div className="flex flex-col">
+            <label className="text-emerald-700 font-semibold mb-2">
+              Destination
+            </label>
             <input
               type="text"
-              placeholder="Enter destination"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="w-full mt-2 px-4 py-3 rounded-lg border focus:outline-none focus:ring-2"
-              style={{ borderColor: palette.vibrant }}
+              placeholder="Kandy, Sri Lanka"
+              className="p-3 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 text-black outline-none shadow-sm"
+            />
+          </div>
+
+          {/* Battery */}
+          <div className="flex flex-col">
+            <label className="text-emerald-700 font-semibold mb-2">
+              Battery Level (%)
+            </label>
+            <input
+              type="number"
+              value={battery}
+              onChange={(e) => setBattery(e.target.value)}
+              placeholder="60"
+              className="p-3 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 text-black outline-none shadow-sm"
             />
           </div>
         </div>
 
-        {/* Plan Button */}
-        <button
-          onClick={handlePlanTrip}
-          className="w-full mt-8 py-4 rounded-xl text-white font-semibold text-lg shadow-md hover:opacity-90 transition"
-          style={{ background: palette.dark }}
-        >
-          {loading ? "Optimizing..." : "Plan My Trip"}
-        </button>
-      </div>
-
-      {/* Section Title */}
-      <div className="max-w-4xl mx-auto mt-16">
-        <h2 className="text-2xl font-bold text-gray-800">Route Preview</h2>
-        <p className="text-gray-600 mt-1">
-          Map preview and AI recommendations appear here
-        </p>
-      </div>
-
-      {/* Map Placeholder */}
-      <div className="max-w-4xl mx-auto mt-6">
-        <div className="w-full h-64 rounded-xl bg-gray-200 flex items-center justify-center text-gray-500">
-          Map will render here (Google Maps)
+        {/* Button */}
+        <div className="flex justify-end mt-6">
+          <button className="px-10 py-3 bg-emerald-600 text-white font-semibold rounded-xl shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all">
+            Calculate Route
+          </button>
         </div>
       </div>
 
-      {/* Recommended Stops */}
-      <div className="max-w-5xl mx-auto mt-16">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Recommended Charging Stations
-        </h2>
+      {/* 🗺 MAP + STATIONS */}
+      <div className="w-10/12 mt-10 flex gap-6">
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Card 1 */}
-          <div className="bg-white rounded-xl shadow-md p-5 border">
-            <h3 className="text-lg font-bold">Station A</h3>
-            <p className="text-gray-600">Fast Charging • 5 km from route</p>
-            <p className="text-green-600 mt-2 font-semibold">Slot Available</p>
-          </div>
+        {/* MAP */}
+        <div className="w-8/12 h-[70vh] rounded-3xl shadow-xl overflow-hidden bg-white border border-emerald-100">
+          <MapView stops={stops} onRouteReady={handleRouteCalculated} />
+        </div>
 
-          {/* Card 2 */}
-          <div className="bg-white rounded-xl shadow-md p-5 border">
-            <h3 className="text-lg font-bold">Station B</h3>
-            <p className="text-gray-600">Ultra-Fast • 12 km from route</p>
-            <p className="text-red-500 mt-2 font-semibold">Queue: 4 Vehicles</p>
-          </div>
+        {/* STATION LIST */}
+        <div className="w-4/12 h-[70vh] overflow-y-auto bg-white rounded-3xl shadow-xl p-6 border border-emerald-100">
 
-          {/* Card 3 */}
-          <div className="bg-white rounded-xl shadow-md p-5 border">
-            <h3 className="text-lg font-bold">Station C</h3>
-            <p className="text-gray-600">Fast Charging • 8 km from route</p>
-            <p className="text-yellow-500 mt-2 font-semibold">Limited Slots</p>
-          </div>
+          <h2 className="text-2xl font-bold text-emerald-700 mb-5">Nearby Stations</h2>
+
+          {stations.length === 0 ? (
+            <p className="text-gray-500 text-center mt-20">
+              Start a route to view charging stations.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {stations.map(s => (
+                <div
+                  key={s.id}
+                  className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 shadow hover:shadow-md transition-all"
+                >
+                  <p className="text-xl font-bold text-emerald-700">{s.name}</p>
+
+                  <div className="flex items-center gap-2 mt-2 text-black">
+                    <img src={icon1} className="w-[20px] h-[20px]" />
+                    <p>{s.distance} km away</p>
+                  </div>
+
+                  <p className="mt-2 text-sm text-gray-600">Status</p>
+                  <p className={`font-semibold ${
+                    s.status === "Available" ? "text-green-600" : "text-red-500"
+                  }`}>
+                    {s.status}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
         </div>
       </div>
+
+      {/* SUMMARY */}
+      {routeData && (
+        <div className="w-10/12 mt-10">
+          <RouteSummary data={routeData} energy={energy} battery={battery} />
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default TripPlanner;
