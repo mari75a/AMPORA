@@ -44,7 +44,7 @@ import AdminLayout from "./components/Layout.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import ChargerPage from "./pages/admin/Charger.jsx";
 import Subscription from "./pages/admin/Subscription.jsx";
-
+import BookingStation from "./pages/admin/BookingStation.jsx";
 
 function AppLayout() {
   const location = useLocation();
@@ -57,10 +57,6 @@ function AppLayout() {
 
   return (
     <>
-
-
-
-    
       {!isAuthPage && !isAdminPage && <Navbar />}
 
       <LoaderProvider>
@@ -100,10 +96,9 @@ function AppLayout() {
             />{" "}
             <Route path="charger" element={<ChargerPage />} />
             <Route path="subscriptions" element={<Subscription />} />
+            <Route path="BookingStation" element={<BookingStation />} />
           </Route>
         </Routes>
-
-
       </LoaderProvider>
       {!isAuthPage && !isAdminPage && <Footer />}
     </>
