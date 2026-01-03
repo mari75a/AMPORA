@@ -57,6 +57,8 @@ function decodePolyline(encoded) {
 
 /* ================= COMPONENT ================= */
 export default function TripPlanner() {
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
+ const userId = localStorage.getItem("userId");
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
@@ -89,7 +91,7 @@ const [avoidHighways, setAvoidHighways] = useState(false);
 
   /* ================= LOAD VEHICLES ================= */
   useEffect(() => {
-    fetch(`${BACKEND}/api/vehicles/user/${USER_ID}`)
+    fetch(`${BACKEND}/api/vehicles/user/${userId}`)
       .then((res) => res.json())
       .then(setVehicles)
       .catch(console.error);
@@ -280,7 +282,8 @@ const [avoidHighways, setAvoidHighways] = useState(false);
 </div>
 
           <div className="grid md:grid-cols-3 gap-4">
-            <select
+          <div className="w-full flex flex-col">
+<select
               className="p-4 rounded-2xl bg-[#edffff] outline-none"
               onChange={(e) =>
                 setSelectedVehicle(
@@ -288,13 +291,34 @@ const [avoidHighways, setAvoidHighways] = useState(false);
                 )
               }
             >
-              <option>Select Vehicle</option>
-              {vehicles.map(v => (
-                <option key={v.vehicleId} value={v.vehicleId}>
-                  {v.brand_name} {v.model_name} ({v.plate})
+              <option value="">Select Vehicle</option>
+              {isLoggedIn && vehicles.length === 0 && (
+                <option >
+                 <a href="/vehicles">No vehicles found – add a vehicle first</a> 
                 </option>
-              ))}
+              )}
             </select>
+            {/* ✅ ACTION LINK OUTSIDE */}
+{isLoggedIn && vehicles.length === 0 && (
+  <a
+    href="/vehicles"
+    className="mt-2 inline-block text-sm text-[#00d491] hover:underline"
+  >
+    Add your first vehicle →
+  </a>
+)}
+
+{!isLoggedIn && (
+  <a
+    href="/login"
+    className="mt-2 inline-block text-sm text-[#00d491] hover:underline"
+  >
+    Log in to continue →
+  </a>
+)}
+
+          </div>
+            
 
             <div className="bg-[#edffff] rounded-2xl p-4">
               <div className="flex justify-between items-center mb-2">
