@@ -141,8 +141,10 @@ export default function StationFinder() {
       body: JSON.stringify({
         userId,
         chargerId: selectedStation.chargerId,
+        date: dateStr,
         startTime: `${dateStr}T${hh}:${mm}:00`,
         endTime: `${dateStr}T${Number(hh) + duration}:${mm}:00`,
+        amount: duration * 800, // Example: 500 currency units per hour
         bookingStatus: "PENDING",
       }),
     });
@@ -270,6 +272,7 @@ export default function StationFinder() {
               onChange={setBookingDate}
               minDate={new Date()}
               className="w-full p-2 border rounded mt-2"
+              placeholderText="Select Date"
             />
 
             <input
@@ -277,6 +280,7 @@ export default function StationFinder() {
               className="w-full p-2 border rounded mt-2"
               value={bookingTime}
               onChange={(e) => setBookingTime(e.target.value)}
+              placeholder="Select Time"
             />
 
             <select
