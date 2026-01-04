@@ -13,7 +13,7 @@ export default function useChargingSocket() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const WS_URL = "ws://192.168.33.79:8083/ws/charging";
+    const WS_URL = "ws://192.168.13.79:8083/ws/charging";
 
     wsRef.current = new WebSocket(WS_URL);
 
