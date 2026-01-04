@@ -14,10 +14,11 @@ import {
 import { MdEvStation } from "react-icons/md";
 import { TbBatteryCharging } from "react-icons/tb";
 import { LuCar } from "react-icons/lu";
+import SessionEndModal from "../../components/SessionEndModal";
 
 import SideNav from "../../components/dashboard/SideNav";
 import { logout } from "../../utils/auth";
-import LiveChargingCard from "../../components/LiveChargingCard";
+
 import useChargingSocket from "../../hooks/useChargingSocket";
 import ChargingLiveCard from "../../components/LiveChargingCard";
 
@@ -28,7 +29,14 @@ const glass =
 
 export default function UserDashboard() {
   const userId = localStorage.getItem("userId");
-const { data, connected } = useChargingSocket();
+  const {
+  data,
+  connected,
+  sessionEnded,
+  billInfo,
+  resetSession
+} = useChargingSocket();
+
   const [user, setUser] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,8 +87,14 @@ const { data, connected } = useChargingSocket();
   const selectedVehicle = vehicles[0];
 
   return (
+    
     <div className="w-screen min-h-screen mt-20 bg-gradient-to-b from-emerald-50 via-teal-50 to-white">
-
+{sessionEnded && billInfo && (
+  <SessionEndModal
+    billInfo={billInfo}
+    onClose={resetSession}
+  />
+)}
       {/* ================= HEADER ================= */}
       <div className="mx-auto w-11/12 max-w-7xl py-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-700">

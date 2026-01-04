@@ -11,40 +11,47 @@ export default function useChargingSocket() {
   });
 
   const [connected, setConnected] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(false);
+  const [billInfo, setBillInfo] = useState(null);
 
   useEffect(() => {
     const WS_URL = "ws://192.168.13.79:8083/ws/charging";
-
     wsRef.current = new WebSocket(WS_URL);
 
-    wsRef.current.onopen = () => {
-      console.log("✅ WS CONNECTED");
-      setConnected(true);
-    };
+    wsRef.current.onopen = () => setConnected(true);
 
     wsRef.current.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        console.log("📡 LIVE DATA:", payload);
+      const payload = JSON.parse(event.data);
+
+      /* 🔴 SESSION END */
+      if (payload.type === "SESSION_END") {
+        console.log("Session ended", payload);
+        setSessionEnded(true);
+        setBillInfo({
+          energy: payload.energy,
+          bill: payload.bill,
+        });
+        return;
+      }
+
+      /* LIVE DATA */
+      if (payload.type === "LIVE") {
         setData(payload);
-      } catch (err) {
-        console.error("❌ JSON parse error", err);
       }
     };
 
-    wsRef.current.onerror = (err) => {
-      console.error("❌ WS ERROR", err);
-    };
-
-    wsRef.current.onclose = () => {
-      console.warn("⚠️ WS DISCONNECTED");
-      setConnected(false);
-    };
-
-    return () => {
-      wsRef.current?.close();
-    };
+    wsRef.current.onclose = () => setConnected(false);
+    return () => wsRef.current?.close();
   }, []);
 
-  return { data, connected };
+  return {
+    data,
+    connected,
+    sessionEnded,
+    billInfo,
+    resetSession: () => {
+      setSessionEnded(false);
+      setBillInfo(null);
+    },
+  };
 }
