@@ -59,10 +59,10 @@ export default function StationOperator() {
   };
 
   return (
-    <div className="min-h-screen pt-20 px-8 pb-10 bg-gradient-to-br from-gray-50 via-emerald-50 to-teal-100">
+    <div className="min-h-screen w-screen pt-20 px-8 pb-10 bg-gradient-to-br from-gray-50 via-emerald-50 to-teal-100">
 
       {/* ---------------- HEADER ---------------- */}
-      <header className="mb-8 max-w-4xl">
+      <header className="mb-8 w-full ">
         <h1 className="text-3xl font-bold text-slate-800">
           Station Operator Panel
         </h1>
@@ -81,15 +81,54 @@ export default function StationOperator() {
       </header>
 
       {/* ADD SLOT BUTTON */}
-      <div className="mb-4">
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-rose-500 text-black rounded-lg hover:bg-emerald-800"
-        >
-          <PlusIcon className="w-5 h-5" />
-          Add New Slot
-        </button>
-      </div>
+      
+      
+      
+      {/* ADD SLOT BUTTON */}
+
+
+{/* ADD SLOT BUTTON */}
+<div
+  style={{
+    display: "flex",
+    justifyContent: "flex-end", // pushes button to the right
+    marginBottom: "16px",
+  }}
+>
+  <button
+    onClick={() => setShowAddForm(true)}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      backgroundColor: "#00C389",
+      color: "#FFFFFF",
+      padding: "10px 20px",
+      borderRadius: "12px",
+      fontWeight: "600",
+      fontSize: "16px",
+      border: "none",
+      cursor: "pointer",
+      boxShadow: "0 6px 16px rgba(0, 195, 137, 0.35)",
+      transition: "background-color 0.3s ease, box-shadow 0.3s ease",
+    }}
+    onMouseOver={(e) => {
+      e.currentTarget.style.backgroundColor = "#00B27E";
+      e.currentTarget.style.boxShadow =
+        "0 8px 20px rgba(0, 195, 137, 0.45)";
+    }}
+    onMouseOut={(e) => {
+      e.currentTarget.style.backgroundColor = "#00C389";
+      e.currentTarget.style.boxShadow =
+        "0 6px 16px rgba(0, 195, 137, 0.35)";
+    }}
+  >
+    <PlusIcon style={{ width: "20px", height: "20px" }} />
+    Add New Slot
+  </button>
+</div>
+
+  
 
       {/* ---------------- TABLE ---------------- */}
       <div className="bg-white rounded-2xl shadow p-6">
@@ -191,10 +230,24 @@ function SlotForm({ slot, setSlot, onSave, onReset }) {
       <Select label="Type" value={slot.type} onChange={(v) => setSlot({ ...slot, type: v })} options={["Fast", "Ultra-Fast", "Slow"]} />
       <Select label="Power" value={slot.power} onChange={(v) => setSlot({ ...slot, power: Number(v) })} options={[11, 22, 50]} suffix="kW" />
 
-      <div className="flex justify-end gap-3 mt-4">
-        <button onClick={onReset} className="px-4 py-2 bg-gray-100 rounded">Reset</button>
-        <button onClick={onSave} className="px-4 py-2 bg-emerald-700 text-white rounded">Update</button>
-      </div>
+<div className="flex justify-end gap-3 mt-4">
+  <button
+    onClick={onReset}
+    className="px-4 py-2 bg-gray-100 rounded"
+  >
+    Reset
+  </button>
+
+  <button
+    onClick={onSave}
+    className="px-4 py-2 !bg-emerald-700 !text-black rounded"
+  >
+    Add
+  </button>
+</div>
+
+
+
     </>
   );
 }
