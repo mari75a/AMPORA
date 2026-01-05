@@ -53,12 +53,12 @@ export default function PaymentSuccess() {
         {/* Actions */}
         <div className="mt-8 flex flex-col gap-4">
           <button
-            onClick={() => navigate("/bookings")}
+            onClick={() => navigate("/user-dashboard")}
             className="w-full py-3 rounded-2xl font-semibold text-black
                        transition-all shadow-lg hover:scale-[1.02]"
             style={{ background: EV_GREEN }}
           >
-            View My Bookings
+            Go to Dashboard
           </button>
 
           <button

@@ -10,6 +10,24 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
+  // ================= AUTH CHECK =================
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
+
+  function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
+
+  // ================= NAV ITEMS =================
+  const navItems = [
+    ["Home", "/", "public"],
+    ["Trip Planner", "/trip", "public"],
+    ["Stations", "/stations", "public"],
+    ["Bookings", "/bookings", "private"],
+    ["Payments", "/payments", "private"],
+    ["Dashboard", "/user-dashboard", "private"],
+  ];
+
   return (
     <header className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -18,11 +36,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3 select-none">
           <img src={logo} alt="Logo" className="w-10 h-10" />
 
-          <motion.div
-            initial="hidden"
-            animate="show"
-            className="flex text-xl font-extrabold tracking-wide"
-          >
+          <motion.div className="flex text-xl font-extrabold tracking-wide">
             {letters.map((letter, i) => (
               <motion.span
                 key={i}
@@ -39,25 +53,20 @@ export default function Navbar() {
 
         {/* ================= DESKTOP NAV ================= */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          {[
-            ["Home", "/"],
-            ["Trip Planner", "/trip"],
-            ["Stations", "/stations"],
-            ["Bookings", "/bookings"],
-            ["Payments", "/payments"],
-            ["Dashboard", "/user-dashboard"],
-          ].map(([name, link]) => (
-            <a
-              key={name}
-              href={link}
-              className="relative text-white/80 hover:text-white transition
-                         after:absolute after:left-0 after:-bottom-1
-                         after:w-0 after:h-[2px] after:bg-[#00d491]
-                         hover:after:w-full after:transition-all"
-            >
-              {name}
-            </a>
-          ))}
+          {navItems
+            .filter(([_, __, type]) => type === "public" || isLoggedIn)
+            .map(([name, link]) => (
+              <a
+                key={name}
+                href={link}
+                className="relative text-white/80 hover:text-white transition
+                           after:absolute after:left-0 after:-bottom-1
+                           after:w-0 after:h-[2px] after:bg-[#00d491]
+                           hover:after:w-full after:transition-all"
+              >
+                {name}
+              </a>
+            ))}
         </nav>
 
         {/* ================= ACTIONS ================= */}
@@ -75,39 +84,56 @@ export default function Navbar() {
             <span>App</span>
           </a>
 
-          {/* Profile */}
-          <div className="relative">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="w-10 h-10 rounded-full border border-[#00d491]
-                         flex items-center justify-center
-                         hover:bg-[#00d491]/10 transition"
-            >
-              <FiUser className="text-white text-lg" />
-            </button>
-
-            {profileOpen && (
-              <div
-                className="absolute right-0 mt-3 w-52 rounded-2xl
-                           bg-white shadow-xl overflow-hidden"
+          {/* ================= AUTH BUTTONS ================= */}
+          {!isLoggedIn ? (
+            <>
+              <a
+                href="/login"
+                className="px-4 py-2 rounded-full border border-[#00d491]
+                           text-white hover:bg-[#00d491]/10 transition"
               >
-                <a
-                  href="/user-dashboard"
-                  className="flex items-center gap-3 px-4 py-3
-                             hover:bg-gray-100 text-gray-700"
-                >
-                  <FiSettings /> Profile Settings
-                </a>
-                <a
-                  href="/logout"
-                  className="flex items-center gap-3 px-4 py-3
-                             hover:bg-gray-100 text-gray-700"
-                >
-                  <FiLogOut /> Logout
-                </a>
-              </div>
-            )}
-          </div>
+                Login
+              </a>
+              <a
+                href="/signup"
+                className="px-4 py-2 rounded-full bg-[#00d491]
+                           text-black font-semibold hover:opacity-90 transition"
+              >
+                Sign Up
+              </a>
+            </>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-10 h-10 rounded-full border border-[#00d491]
+                           flex items-center justify-center
+                           hover:bg-[#00d491]/10 transition"
+              >
+                <FiUser className="text-white text-lg" />
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 mt-3 w-52 rounded-2xl
+                               bg-white shadow-xl overflow-hidden">
+                  <a
+                    href="/user-dashboard"
+                    className="flex items-center gap-3 px-4 py-3
+                               hover:bg-gray-100 text-gray-700"
+                  >
+                    <FiSettings /> Profile
+                  </a>
+                  <button
+                    onClick={logout}
+                    className="w-full flex items-center gap-3 px-4 py-3
+                               hover:bg-gray-100 text-gray-700 text-left"
+                  >
+                    <FiLogOut /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ================= MOBILE TOGGLE ================= */}
@@ -115,24 +141,11 @@ export default function Navbar() {
           className="md:hidden text-white"
           onClick={() => setOpen(!open)}
         >
-          <svg
-            className="w-8 h-8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
             {open ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             )}
           </svg>
         </button>
@@ -142,22 +155,41 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden bg-black/95 backdrop-blur-xl px-6 pb-6 border-t border-white/10">
           <nav className="flex flex-col gap-4 text-white/90 mt-4">
-            <a href="/">Home</a>
-            <a href="/trip">Trip Planner</a>
-            <a href="/stations">Stations</a>
-            <a href="/bookings">Bookings</a>
-            <a href="/payments">Payments</a>
-            <a href="/user-dashboard">Dashboard</a>
+            {navItems
+              .filter(([_, __, type]) => type === "public" || isLoggedIn)
+              .map(([name, link]) => (
+                <a key={name} href={link}>
+                  {name}
+                </a>
+              ))}
           </nav>
 
-          <div className="flex gap-3 mt-6">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl text-white">
-              <FaGooglePlay /> Android
+          {!isLoggedIn ? (
+            <div className="flex gap-3 mt-6">
+              <a
+                href="/login"
+                className="w-full text-center py-2 bg-white/10
+                           rounded-xl text-white"
+              >
+                Login
+              </a>
+              <a
+                href="/signup"
+                className="w-full text-center py-2 bg-[#00d491]
+                           rounded-xl text-black font-semibold"
+              >
+                Sign Up
+              </a>
+            </div>
+          ) : (
+            <button
+              onClick={logout}
+              className="mt-6 w-full py-2 bg-red-500
+                         rounded-xl text-white"
+            >
+              Logout
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl text-white">
-              <FaAppStoreIos /> iOS
-            </button>
-          </div>
+          )}
         </div>
       )}
     </header>

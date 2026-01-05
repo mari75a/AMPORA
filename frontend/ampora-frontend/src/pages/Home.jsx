@@ -20,12 +20,12 @@ const Home = () => {
 
       <HeroSection />
 
-      {/* ============== ELECTRIC FLOW LINE ============== */}
+     
       <div className="relative w-full flex justify-center mt-10">
         <div className="electric-line"></div>
       </div>
 
-      {/* ============== FEATURE CARDS ============== */}
+     
       <motion.div
         variants={fadeUp}
         initial="hidden"
@@ -49,7 +49,7 @@ const Home = () => {
         ))}
       </motion.div>
 
-      {/* ============== WHY CHOOSE US ============== */}
+   
       <motion.div
         variants={fadeUp}
         initial="hidden"
@@ -61,7 +61,7 @@ const Home = () => {
         </h2>
       </motion.div>
 
-      {/* ============== STATS ============== */}
+     
       <motion.div
         variants={fadeUp}
         initial="hidden"
@@ -86,10 +86,10 @@ const Home = () => {
 
 
 
-      {/* ============== BOTTOM INFO SECTIONS ============== */}
+     
       <div className="flex flex-col lg:flex-row justify-center mt-20 gap-8 px-16 my-5">
 
-        {/* LEFT */}
+      
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -113,7 +113,7 @@ const Home = () => {
           </div>
         </motion.div>
 
-        {/* RIGHT */}
+      
         <motion.div
           variants={fadeUp}
           initial="hidden"
@@ -130,7 +130,7 @@ const Home = () => {
               <p className="text-gray-700 mt-2">
                 Plan the most efficient route with real-time station data.
               </p>
-              <button className="mt-5 px-6 py-2 bg-white border-2 border-emerald-400 rounded-xl shadow-sm hover:shadow-lg">
+              <button onClick={() => window.location.href = "/trip"} className="mt-5 px-6 py-2 bg-white border-2 border-emerald-400 rounded-xl shadow-sm hover:shadow-lg">
                 Plan Trip
               </button>
             </div>

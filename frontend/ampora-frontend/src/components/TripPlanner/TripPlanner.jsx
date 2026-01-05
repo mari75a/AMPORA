@@ -57,13 +57,15 @@ function decodePolyline(encoded) {
 
 /* ================= COMPONENT ================= */
 export default function TripPlanner() {
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
+  const userId = localStorage.getItem("userId");
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
   });
 
   const mapCenter = { lat: 7.8731, lng: 80.7718 };
-const [avoidHighways, setAvoidHighways] = useState(false);
+  const [avoidHighways, setAvoidHighways] = useState(false);
   /* ===== START / END ===== */
   const [startText, setStartText] = useState("");
   const [endText, setEndText] = useState("");
@@ -89,7 +91,7 @@ const [avoidHighways, setAvoidHighways] = useState(false);
 
   /* ================= LOAD VEHICLES ================= */
   useEffect(() => {
-    fetch(`${BACKEND}/api/vehicles/user/${USER_ID}`)
+    fetch(`${BACKEND}/api/vehicles/user/${userId}`)
       .then((res) => res.json())
       .then(setVehicles)
       .catch(console.error);
@@ -126,7 +128,7 @@ const [avoidHighways, setAvoidHighways] = useState(false);
     setTripStatus(null);
   }
 
-  /* ================= SELECT ROUTE ================= */
+
   async function selectRoute(index) {
     setSelectedRouteIndex(index);
     setTripStatus(null);
@@ -160,7 +162,7 @@ const [avoidHighways, setAvoidHighways] = useState(false);
   }
 
 
-  /* ================= TRIP LOGIC ================= */
+
   function evaluateTrip(route, stations) {
     if (!selectedVehicle) {
       setTripStatus({ ok: false, msg: "Select a vehicle first" });
@@ -170,10 +172,10 @@ const [avoidHighways, setAvoidHighways] = useState(false);
     const fullRangeKm = selectedVehicle.rangeKm;
     const availableKm = (batteryPct / 100) * fullRangeKm;
 
-    // ROAD distance from Google Directions
+
     const routeDistanceKm = route.legs[0].distance.value / 1000;
 
-    // Case 1: No stations on route → must reach destination directly
+
     if (stations.length === 0) {
       if (availableKm >= routeDistanceKm) {
         setTripStatus({
@@ -191,11 +193,10 @@ const [avoidHighways, setAvoidHighways] = useState(false);
       return;
     }
 
-    // Case 2: Stations exist → check FIRST station only
+
     const firstStation = stations[0];
 
-    // IMPORTANT:
-    // backend must provide distance from start to station (road distance)
+
     const distanceToFirstStationKm = firstStation.distanceFromStartKm;
 
     if (availableKm >= distanceToFirstStationKm) {
@@ -215,7 +216,11 @@ const [avoidHighways, setAvoidHighways] = useState(false);
 
 
 
-
+  const sriLankaAutocompleteOptions = {
+    componentRestrictions: { country: "lk" }, // Sri Lanka
+    fields: ["formatted_address", "geometry", "name"],
+    types: ["geocode"], // cities, towns, roads, etc.
+  };
 
   if (!isLoaded) return <div>Loading maps…</div>;
 
@@ -235,66 +240,97 @@ const [avoidHighways, setAvoidHighways] = useState(false);
           </h2>
 
           <div className=" grid md:grid-cols-2 gap-4">
-            <Autocomplete onLoad={(r) => (acStartRef.current = r)}
+            <Autocomplete
+              onLoad={(r) => (acStartRef.current = r)}
               onPlaceChanged={() =>
-                setStartText(acStartRef.current.getPlace().formatted_address)
-              }>
+                setStartText(acStartRef.current.getPlace()?.formatted_address || "")
+              }
+              options={sriLankaAutocompleteOptions}
+            >
               <input
                 className="p-4 w-full rounded-2xl bg-[#edffff] outline-none focus:ring-2 focus:ring-emerald-400"
-                placeholder="Start location"
+                placeholder="Start location (Sri Lanka only)"
+              />
+            </Autocomplete>
+            <Autocomplete
+              onLoad={(r) => (acEndRef.current = r)}
+              onPlaceChanged={() =>
+                setEndText(acEndRef.current.getPlace()?.formatted_address || "")
+              }
+              options={sriLankaAutocompleteOptions}
+            >
+              <input
+                className="p-4 w-full rounded-2xl bg-[#edffff] outline-none focus:ring-2 focus:ring-emerald-400"
+                placeholder="Destination (Sri Lanka only)"
               />
             </Autocomplete>
 
-            <Autocomplete onLoad={(r) => (acEndRef.current = r)}
-              onPlaceChanged={() =>
-                setEndText(acEndRef.current.getPlace().formatted_address)
-              }>
-              <input
-                className="p-4 w-full rounded-2xl bg-[#edffff] outline-none focus:ring-2 focus:ring-emerald-400"
-                placeholder="Destination"
-              />
-            </Autocomplete>
           </div>
           <div className="flex items-center justify-between bg-[#edffff] rounded-2xl px-4 py-3">
-  <div>
-    <p className="text-sm font-medium text-gray-700">
-      Avoid Highways
-    </p>
-    <p className="text-xs text-gray-500">
-      Prefer city & scenic roads
-    </p>
-  </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700">
+                Avoid Highways
+              </p>
+              <p className="text-xs text-gray-500">
+                Prefer city & scenic roads
+              </p>
+            </div>
 
-  <button
-    onClick={() => setAvoidHighways((v) => !v)}
-    className={`relative w-14 h-8 rounded-full transition-colors ${
-      avoidHighways ? "bg-emerald-500" : "bg-gray-300"
-    }`}
-  >
-    <span
-      className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${
-        avoidHighways ? "translate-x-6" : ""
-      }`}
-    />
-  </button>
-</div>
+            <button
+              onClick={() => setAvoidHighways((v) => !v)}
+              className={`relative w-14 h-8 rounded-full transition-colors ${avoidHighways ? "bg-emerald-500" : "bg-gray-300"
+                }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${avoidHighways ? "translate-x-6" : ""
+                  }`}
+              />
+            </button>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-4">
-            <select
-              className="p-4 rounded-2xl bg-[#edffff] outline-none"
-              onChange={(e) =>
-                setSelectedVehicle(
-                  vehicles.find(v => v.vehicleId === e.target.value)
-                )
-              }
-            >
-              <option>Select Vehicle</option>
-              {vehicles.map(v => (
-                <option key={v.vehicleId} value={v.vehicleId}>
-                  {v.brand_name} {v.model_name} ({v.plate})
-                </option>
-              ))}
-            </select>
+            <div className="w-full flex flex-col">
+              <select
+                className="p-4 rounded-2xl bg-[#edffff] outline-none"
+                onChange={(e) =>
+                  setSelectedVehicle(
+                    vehicles.find(v => v.vehicleId === e.target.value)
+                  )
+                }
+              >
+                <option value="">Select Vehicle</option>
+                {isLoggedIn && vehicles.map((v) => (
+                  <option key={v.vehicleId} value={v.vehicleId}>
+                    {v.brand_name} {v.model_name} ({v.rangeKm} km range)
+                  </option>
+                ))}
+                {isLoggedIn && vehicles.length === 0 && (
+                  <option >
+                    <a href="/vehicles">No vehicles found – add a vehicle first</a>
+                  </option>
+                )}
+              </select>
+              {/* ✅ ACTION LINK OUTSIDE */}
+              {isLoggedIn && vehicles.length === 0 && (
+                <a
+                  href="/vehicles"
+                  className="mt-2 inline-block text-sm text-[#00d491] hover:underline"
+                >
+                  Add your first vehicle →
+                </a>
+              )}
+
+              {!isLoggedIn && (
+                <a
+                  href="/login"
+                  className="mt-2 inline-block text-sm text-[#00d491] hover:underline"
+                >
+                  Log in to continue →
+                </a>
+              )}
+
+            </div>
+
 
             <div className="bg-[#edffff] rounded-2xl p-4">
               <div className="flex justify-between items-center mb-2">
@@ -356,78 +392,78 @@ const [avoidHighways, setAvoidHighways] = useState(false);
         {/* ROUTES PANEL */}
         <div className="md:col-span-1 bg-white rounded-3xl p-4 shadow-md space-y-3 max-h-[550px] overflow-y-auto">
           <motion.div
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    className="md:col-span-1 bg-white/90 backdrop-blur-xl rounded-3xl p-4 shadow-md"
-  >
-          <h3 className="font-semibold text-gray-700 mb-2">
-            Available Routes
-          </h3>
-         
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="md:col-span-1 bg-white/90 backdrop-blur-xl rounded-3xl p-4 shadow-md"
+          >
+            <h3 className="font-semibold text-gray-700 mb-2">
+              Available Routes
+            </h3>
 
-          {routes.map((r, i) => (
-            <motion.button
-              key={i}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => selectRoute(i)}
-              className={`w-full p-4 rounded-2xl text-left transition ${selectedRouteIndex === i
-                ? "bg-emerald-500 text-white"
-                : "bg-[#edffff]"
-                }`}
-            >
-              <div className="font-medium">Route {i + 1}</div>
-              <div className="text-sm opacity-80">
-                {(r.legs[0].distance.value / 1000).toFixed(1)} km
-              </div>
-            </motion.button>
-          ))}
-           </motion.div>
+
+            {routes.map((r, i) => (
+              <motion.button
+                key={i}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => selectRoute(i)}
+                className={`w-full p-4 rounded-2xl text-left transition ${selectedRouteIndex === i
+                  ? "bg-emerald-500 text-white"
+                  : "bg-[#edffff]"
+                  }`}
+              >
+                <div className="font-medium">Route {i + 1}</div>
+                <div className="text-sm opacity-80">
+                  {(r.legs[0].distance.value / 1000).toFixed(1)} km
+                </div>
+              </motion.button>
+            ))}
+          </motion.div>
         </div>
 
         {/* MAP PANEL */}
         <motion.div
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    className="md:col-span-3 h-[550px] rounded-3xl overflow-hidden shadow-2xl"
-  >
-        <div className="md:col-span-3 h-[550px] rounded-3xl overflow-hidden shadow-xl">
-          
-          <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={mapCenter}
-            zoom={7}
-          >
-            {selectedRouteIndex !== null && rawDirections && (
-              <DirectionsRenderer
-                directions={{
-                  ...rawDirections,
-                  routes: [rawDirections.routes[selectedRouteIndex]],
-                }}
-              />
-            )}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="md:col-span-3 h-[550px] rounded-3xl overflow-hidden shadow-2xl"
+        >
+          <div className="md:col-span-3 h-[550px] rounded-3xl overflow-hidden shadow-xl">
 
-            {stations.map((s) => (
-              <PulsingMarker
-                key={s.stationId}
-                position={{ lat: s.lat, lng: s.lon }}
-                onClick={() => setSelectedStation(s)}
-              />
-            ))}
+            <GoogleMap
+              mapContainerStyle={containerStyle}
+              center={mapCenter}
+              zoom={7}
+            >
+              {selectedRouteIndex !== null && rawDirections && (
+                <DirectionsRenderer
+                  directions={{
+                    ...rawDirections,
+                    routes: [rawDirections.routes[selectedRouteIndex]],
+                  }}
+                />
+              )}
 
-            {selectedStation && (
-              <InfoWindow
-                position={{ lat: selectedStation.lat, lng: selectedStation.lon }}
-                onCloseClick={() => setSelectedStation(null)}
-              >
-                <div className="text-sm">
-                  <strong>{selectedStation.name}</strong>
-                  <p>{selectedStation.powerKw} kW</p>
-                </div>
-              </InfoWindow>
-            )}
-          </GoogleMap>
-        </div>
+              {stations.map((s) => (
+                <PulsingMarker
+                  key={s.stationId}
+                  position={{ lat: s.lat, lng: s.lon }}
+                  onClick={() => setSelectedStation(s)}
+                />
+              ))}
+
+              {selectedStation && (
+                <InfoWindow
+                  position={{ lat: selectedStation.lat, lng: selectedStation.lon }}
+                  onCloseClick={() => setSelectedStation(null)}
+                >
+                  <div className="text-sm">
+                    <strong>{selectedStation.name}</strong>
+                    <p>{selectedStation.powerKw} kW</p>
+                  </div>
+                </InfoWindow>
+              )}
+            </GoogleMap>
+          </div>
         </motion.div>
       </div>
 

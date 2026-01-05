@@ -14,7 +14,7 @@ import "../pages/admin/adminstyle.css";
 
 import MessageCenter from "../pages/admin/MessageCenter.jsx";
 
-import logo from "../assets/logo.png"; //
+import logo from "../assets/logo.png";
 
 const letters = ["A", "M", "P", "O", "R", "A"];
 
@@ -30,7 +30,7 @@ const menuItems = [
       { label: "Subscriptions", path: "/admin/subscriptions" },
     ],
   },
-  { label: "Charging Session", path: "/admin/charger-session" },
+  { label: "BookingStation", path: "/admin/BookingStation" },
 ];
 
 export default function AdminNavbar() {
@@ -127,10 +127,10 @@ export default function AdminNavbar() {
 
             <button
               onClick={() => setMessagesOpen(true)}
-              className="message-bell-btn"
+              className="bell-btn p-2 "
               aria-label="Messages"
             >
-              <FiBell className="bell" />
+              <FiBell />
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow" />
             </button>
           </div>
