@@ -1,71 +1,145 @@
-export default function Home() {
+import React from "react";
+import { motion } from "framer-motion";
+import icon1 from "../assets/battery1.png";
+import roadtrip from "../assets/one-way-trip.png";
+import mark from "../assets/location.png";
+import bg1 from "../assets/bg1.jpg";
+import EVSimulator from "../components/UI/EVSimulator";
+import HeroSection from "../components/UI/HeroSection";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 50 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.8 } },
+};
+
+const Home = () => {
+
+
   return (
-    <div className="w-screen flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#FFEDF3] to-[#ADEED9] text-center pt-24 px-6">
+    <div className="w-screen min-h-screen bg-[#EDFFFF] overflow-hidden">
+
+      <HeroSection />
+
+     
+      <div className="relative w-full flex justify-center mt-10">
+        <div className="electric-line"></div>
+      </div>
+
+     
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="show"
+        className="mt-20 flex flex-col lg:flex-row justify-center gap-10 px-16"
+      >
+        {[
+          { title: "Find Stations", img: mark },
+          { title: "Plan Trip", img: roadtrip },
+          { title: "Smart Routing", img: icon1 },
+        ].map((item, i) => (
+          <motion.div
+            key={i}
+            whileHover={{ scale: 1.1, y: -10 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="w-12/12 lg:w-3/12 h-[230px] bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
+          >
+            <h3 className="font-bold text-xl text-gray-800">{item.title}</h3>
+            <img src={item.img} className="w-20 h-20 mt-4" />
+          </motion.div>
+        ))}
+      </motion.div>
+
+   
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="show"
+        className="w-full mt-28 bg-[#D0FBE7] py-16 flex justify-center"
+      >
+        <h2 className="text-[38px] font-extrabold text-gray-900 text-center">
+          Why You Should Choose Ampora ⚡
+        </h2>
+      </motion.div>
+
+     
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        whileInView="show"
+        className="flex flex-col lg:flex-row justify-center gap-10 mt-10 px-16"
+      >
+        {[
+          {num: "150+", label: "Active Charging Stations"},
+          {num: "99%", label: "Uptime Availability"},
+          {num: "50k+", label: "Trips Optimized"},
+        ].map((i, index) => (
+          <motion.div
+            key={index}
+            whileHover={{ scale: 1.12 }}
+            className=" w-12/12 lg:w-3/12 bg-white p-8 h-[200px] shadow-xl rounded-2xl  flex flex-col items-center justify-center hover:shadow-2xl cursor-pointer"
+          >
+            <h1 className="text-[55px] font-extrabold text-emerald-500">{i.num}</h1>
+            <p className="text-gray-700 mt-2 text-sm">{i.label}</p>
+          </motion.div>
+        ))}
+      </motion.div>
+
+
+
+     
+      <div className="flex flex-col lg:flex-row justify-center mt-20 gap-8 px-16 my-5">
+
       
-      {/* HERO SECTION */}
-      <div className="max-w-3xl">
-        <h1 className="text-5xl md:text-6xl font-extrabold text-[#043D3A] mb-4">
-          Welcome to <span className="text-[#0ABAB5]">AMPORA ⚡</span>
-        </h1>
-        <p className="text-lg md:text-xl text-[#043D3A]/80 mb-10 leading-relaxed">
-          Smart EV Trip Planner and Intelligent Charging System — helping you plan smarter,
-          charge faster, and drive greener across Sri Lanka.
-        </p>
-        <a
-          href="/trip-planner"
-          className="bg-[#0ABAB5] hover:bg-[#56DFCF] text-white font-semibold px-8 py-3 rounded-lg shadow-md transition-transform hover:scale-105"
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          className="w-12/12 lg:w-5/12 bg-[#F8F8F8] rounded-[40px] shadow-xl p-8"
         >
-          ⚡ <span className="text-white">Get Started</span>
-        </a>
-      </div>
+          <h2 className="text-[32px] font-bold text-gray-800">Power Up Your Life ⚡</h2>
 
-      {/* FEATURE CARDS */}
-      <div className="mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl">
-        <div className="bg-white border border-[#ADEED9] rounded-2xl p-8 shadow-md hover:shadow-xl transition">
-          <h3 className="text-2xl font-bold text-[#0ABAB5] mb-3">Plan Smarter</h3>
-          <p className="text-[#043D3A]/80">
-            AI-powered trip planning that calculates the best routes, charging stations,
-            and travel time to optimize your EV experience.
-          </p>
-        </div>
+          <div className="flex mt-6">
+            <img src={icon1} className="w-32 h-32" />
 
-        <div className="bg-white border border-[#ADEED9] rounded-2xl p-8 shadow-md hover:shadow-xl transition">
-          <h3 className="text-2xl font-bold text-[#0ABAB5] mb-3">Charge Smarter</h3>
-          <p className="text-[#043D3A]/80">
-            Connect to IoT-based charging stations with real-time availability and
-            RFID authentication for seamless usage.
-          </p>
-        </div>
+            <div className="ml-6 flex flex-col justify-center">
+              <h3 className="text-xl font-semibold text-black">Lightning Fast Charging</h3>
+              <p className="text-gray-600 mt-2">
+                Experience ultra-fast charging to keep your EV running at full power.
+              </p>
+              <button className="mt-5 px-6 py-2 bg-white border-2 border-emerald-400 rounded-xl shadow-sm hover:shadow-lg">
+                See Chargers
+              </button>
+            </div>
+          </div>
+        </motion.div>
 
-        <div className="bg-white border border-[#ADEED9] rounded-2xl p-8 shadow-md hover:shadow-xl transition">
-          <h3 className="text-2xl font-bold text-[#0ABAB5] mb-3">Drive Smarter</h3>
-          <p className="text-[#043D3A]/80">
-            AMPORA’s predictive analytics and ML models help you drive efficiently and
-            reduce your environmental impact.
-          </p>
-        </div>
-      </div>
-
-      {/* CALL TO ACTION */}
-      <div className="mt-20 bg-[#0ABAB5] text-white py-12 px-8 rounded-2xl shadow-lg max-w-4xl">
-        <h2 className="text-3xl font-bold mb-4">Join the EV Revolution ⚡</h2>
-        <p className="text-lg text-[#FFEDF3] mb-6">
-          Join thousands of EV drivers across Sri Lanka who plan their routes the smart way.
-        </p>
-        <a
-          href="/register"
-          className="bg-white text-[#0ABAB5] font-semibold px-6 py-3 rounded-lg shadow hover:bg-[#56DFCF]/20 transition"
+      
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          className="w-12/12 lg:w-5/12 bg-[#A0F5CD] rounded-[40px] shadow-xl p-8"
         >
-          Get Started Free
-        </a>
+          <h2 className="text-[32px] font-bold text-gray-800">Effortless Trip Planning</h2>
+
+          <div className="flex mt-6">
+            <img src={roadtrip} className="w-32 h-32" />
+
+            <div className="ml-6 flex flex-col justify-center">
+              <h3 className="text-xl font-semibold text-black">Smart Route Optimization</h3>
+              <p className="text-gray-700 mt-2">
+                Plan the most efficient route with real-time station data.
+              </p>
+              <button onClick={() => window.location.href = "/trip"} className="mt-5 px-6 py-2 bg-white border-2 border-emerald-400 rounded-xl shadow-sm hover:shadow-lg">
+                Plan Trip
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
-      {/* FOOTER */}
-      <footer className="mt-24 py-6 text-[#043D3A]/70 text-sm">
-        <p>
-          © {new Date().getFullYear()} <span className="text-[#0ABAB5] font-semibold">AMPORA</span> — Smart EV Trip Planner | Built by Team 11 ⚙️
-        </p>
-      </footer>
     </div>
   );
-}
+};
+
+export default Home;

@@ -1,158 +1,154 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import MapView from "./MapView";
+import RouteSummary from "./RouteSummary";
+import calculateEnergy from "./EnergyCalculator";
+import icon1 from "../../assets/placeholder.png";
+import HeroBanner from "../components/TripPlanner/HeroBanner";
 
-export default function TripPlanner() {
-  const [vehicle, setVehicle] = useState("");
-  const [location, setLocation] = useState("");
+const TripPlanner = () => {
+  const [currentLocation, setCurrentLocation] = useState("");
   const [destination, setDestination] = useState("");
-  const [planned, setPlanned] = useState(false);
+  const [battery, setBattery] = useState("");
 
-  // Mock vehicle data
-  const vehicles = [
-    { id: 1, name: "Nissan Leaf", range: "270 km" },
-    { id: 2, name: "BMW i3", range: "300 km" },
-    { id: 3, name: "Tesla Model 3", range: "500 km" },
-  ];
+  const [stops, setStops] = useState([{ id: 1, location: "" }]);
+  const [routeData, setRouteData] = useState(null);
+  const [stations, setStations] = useState([]);
+  const [energy, setEnergy] = useState(null);
 
-  // Mock station recommendations
-  const stations = [
-    { id: 1, name: "Colombo SuperCharge", distance: "2.5 km", status: "Available" },
-    { id: 2, name: "Kandy EV Hub", distance: "4.8 km", status: "In Use" },
-    { id: 3, name: "Negombo GreenCharge", distance: "6.2 km", status: "Available" },
-  ];
+  const handleRouteCalculated = (data) => {
+    setRouteData(data);
+    const totalDistance = data?.totalDistanceKm || 0;
 
-  const handleUseGPS = () => {
-    setLocation("📍 GPS Location Detected");
-  };
+    const energyUsage = calculateEnergy(totalDistance, 0.18);
+    setEnergy(energyUsage);
 
-  const handlePlan = () => {
-    if (vehicle && location && destination) setPlanned(true);
-    else alert("Please fill in all fields before planning your trip!");
+    setStations([
+      { id: 1, name: "Ampora Station 1", distance: 1.2, status: "Available" },
+      { id: 2, name: "Ampora Station 2", distance: 3.7, status: "Busy" },
+      { id: 3, name: "Ampora Station 3", distance: 5.1, status: "Available" },
+    ]);
   };
 
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-[#FFEDF3] via-[#ADEED9] to-[#56DFCF] flex flex-col items-center pt-24 pb-10 px-6">
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <div className="w-screen min-h-screen flex flex-col items-center bg-[#ECFFFA]">
 
-        {/* LEFT CARD - INPUT SECTION */}
-        <div className="bg-white/70 backdrop-blur-lg shadow-xl rounded-2xl border border-[#ADEED9] p-8">
-          <h2 className="text-3xl font-bold text-[#043D3A] mb-8">
-            🧭 Plan Your Trip
-          </h2>
+      {/* 🌈 HERO BANNER */}
+      <HeroBanner />
 
-          {/* Vehicle Select */}
-          <div className="mb-6">
-            <label className="block text-[#043D3A]/80 font-semibold mb-2">
-              Select Your Vehicle
+      {/* 🚗 ROUTE INPUT PANEL */}
+      <div className="w-10/12 bg-white rounded-3xl shadow-[0_8px_35px_rgba(0,0,0,0.08)] px-10 py-8 mt-[-50px] border border-emerald-100 backdrop-blur-xl">
+
+        <h2 className="text-2xl font-bold text-emerald-700 mb-5">
+          Enter Trip Details
+        </h2>
+
+        {/* INPUT GRID */}
+        <div className="grid grid-cols-3 gap-6">
+
+          {/* Current Location */}
+          <div className="flex flex-col">
+            <label className="text-emerald-700 font-semibold mb-2">
+              Current Location
             </label>
-            <select
-              value={vehicle}
-              onChange={(e) => setVehicle(e.target.value)}
-              className="w-full px-4 py-3 border border-[#ADEED9] rounded-xl text-[#043D3A] focus:ring-2 focus:ring-[#0ABAB5]"
-            >
-              <option value="">-- Choose Vehicle --</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.name}>
-                  {v.name} ({v.range})
-                </option>
-              ))}
-            </select>
+            <input
+              type="text"
+              value={currentLocation}
+              onChange={(e) => setCurrentLocation(e.target.value)}
+              placeholder="Colombo, Sri Lanka"
+              className="p-3 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 text-black outline-none shadow-sm"
+            />
           </div>
 
-          {/* Location Input */}
-          <div className="mb-6">
-            <label className="block text-[#043D3A]/80 font-semibold mb-2">
-              Your Current Location
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Enter location manually..."
-                className="flex-1 px-4 py-3 border border-[#ADEED9] rounded-xl text-[#043D3A] focus:ring-2 focus:ring-[#0ABAB5]"
-              />
-              <button
-                onClick={handleUseGPS}
-                className="bg-[#0ABAB5] hover:bg-[#56DFCF] text-white px-5 py-3 rounded-xl font-semibold shadow-md"
-              >
-                📍
-              </button>
-            </div>
-          </div>
-
-          {/* Destination Input */}
-          <div className="mb-8">
-            <label className="block text-[#043D3A]/80 font-semibold mb-2">
+          {/* Destination */}
+          <div className="flex flex-col">
+            <label className="text-emerald-700 font-semibold mb-2">
               Destination
             </label>
             <input
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              placeholder="Enter your destination..."
-              className="w-full px-4 py-3 border border-[#ADEED9] rounded-xl text-[#043D3A] focus:ring-2 focus:ring-[#0ABAB5]"
+              placeholder="Kandy, Sri Lanka"
+              className="p-3 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 text-black outline-none shadow-sm"
             />
           </div>
 
-          {/* Plan Button */}
-          <button
-            onClick={handlePlan}
-            className="w-full bg-[#0ABAB5] hover:bg-[#56DFCF] text-white text-lg font-semibold py-3 rounded-xl shadow-md transition-transform hover:scale-105"
-          >
-            🤖 Plan with AI
-          </button>
-
-          {/* Recommended Stations */}
-          {planned && (
-            <div className="mt-10">
-              <h3 className="text-xl font-bold text-[#043D3A] mb-4">
-                🔋 Recommended Charging Stations
-              </h3>
-              <div className="space-y-4">
-                {stations.map((s) => (
-                  <div
-                    key={s.id}
-                    className="bg-[#FFEDF3] border border-[#ADEED9] rounded-xl p-4 shadow-sm hover:shadow-md transition"
-                  >
-                    <h4 className="font-bold text-[#0ABAB5]">{s.name}</h4>
-                    <p className="text-sm text-[#043D3A]/70">{s.distance}</p>
-                    <span
-                      className={`inline-block mt-2 px-3 py-1 text-sm rounded-full ${
-                        s.status === "Available"
-                          ? "bg-[#56DFCF] text-[#043D3A]"
-                          : s.status === "In Use"
-                          ? "bg-[#0ABAB5]/70 text-white"
-                          : "bg-gray-300 text-gray-600"
-                      }`}
-                    >
-                      {s.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Battery */}
+          <div className="flex flex-col">
+            <label className="text-emerald-700 font-semibold mb-2">
+              Battery Level (%)
+            </label>
+            <input
+              type="number"
+              value={battery}
+              onChange={(e) => setBattery(e.target.value)}
+              placeholder="60"
+              className="p-3 rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-500 text-black outline-none shadow-sm"
+            />
+          </div>
         </div>
 
-        {/* MAP SECTION */}
-        <div className="lg:col-span-2 bg-[#ADEED9]/60 backdrop-blur-md border border-[#56DFCF] rounded-2xl shadow-lg flex flex-col items-center justify-center relative overflow-hidden">
-          {!planned ? (
-            <p className="text-[#043D3A]/70 text-xl font-medium">
-              🗺️ Map preview will appear here after planning your route.
-            </p>
-          ) : (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#56DFCF]/40 to-[#FFEDF3]/30 rounded-2xl"></div>
-              <p className="relative text-[#043D3A]/80 text-2xl font-semibold">
-                AI-Optimized Route Loaded ✅
-              </p>
-              <p className="relative text-[#043D3A]/70 mt-2">
-                Showing optimal path with charging stops...
-              </p>
-            </>
-          )}
+        {/* Button */}
+        <div className="flex justify-end mt-6">
+          <button className="px-10 py-3 bg-emerald-600 text-white font-semibold rounded-xl shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all">
+            Calculate Route
+          </button>
         </div>
       </div>
+
+      {/* 🗺 MAP + STATIONS */}
+      <div className="w-10/12 mt-10 flex gap-6">
+
+        {/* MAP */}
+        <div className="w-8/12 h-[70vh] rounded-3xl shadow-xl overflow-hidden bg-white border border-emerald-100">
+          <MapView stops={stops} onRouteReady={handleRouteCalculated} />
+        </div>
+
+        {/* STATION LIST */}
+        <div className="w-4/12 h-[70vh] overflow-y-auto bg-white rounded-3xl shadow-xl p-6 border border-emerald-100">
+
+          <h2 className="text-2xl font-bold text-emerald-700 mb-5">Nearby Stations</h2>
+
+          {stations.length === 0 ? (
+            <p className="text-gray-500 text-center mt-20">
+              Start a route to view charging stations.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {stations.map(s => (
+                <div
+                  key={s.id}
+                  className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 shadow hover:shadow-md transition-all"
+                >
+                  <p className="text-xl font-bold text-emerald-700">{s.name}</p>
+
+                  <div className="flex items-center gap-2 mt-2 text-black">
+                    <img src={icon1} className="w-[20px] h-[20px]" />
+                    <p>{s.distance} km away</p>
+                  </div>
+
+                  <p className="mt-2 text-sm text-gray-600">Status</p>
+                  <p className={`font-semibold ${
+                    s.status === "Available" ? "text-green-600" : "text-red-500"
+                  }`}>
+                    {s.status}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* SUMMARY */}
+      {routeData && (
+        <div className="w-10/12 mt-10">
+          <RouteSummary data={routeData} energy={energy} battery={battery} />
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default TripPlanner;

@@ -1,56 +1,27 @@
-import requests
-import datetime
+# model.py
+from geopy.distance import geodesic
 
+class NoBookingPredictor:
+    """
+    Simple heuristic predictor: ranks destinations by estimated travel time.
+    Uses straight-line distance / avg_speed_kmph to approximate seconds.
+    Replace with your real ML or OSRM table API when ready.
+    """
 
-class no_book:
-
-    def get_travel_time_with_traffic(self, origin, destination, depart_time=None):
-        API_KEY = "sw7UYhooKEn86ddxxo9AIt9D6CzmattH"
-
-        if depart_time is None:
-            depart_time = datetime.datetime.utcnow()
-
-        depart_str = depart_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-        url = (
-            "https://api.tomtom.com/routing/1/calculateRoute/{orig}:{dest}/json"
-            .format(
-                orig=f"{origin[0]},{origin[1]}",
-                dest=f"{destination[0]},{destination[1]}"
-            )
-        )
-
-        params = {
-            "key": API_KEY,
-            "traffic": "true",
-            "departAt": depart_str,
-            "computeTravelTimeFor": "all",
-            "travelMode": "car",
-        }
-
-        resp = requests.get(url, params=params)
-        data = resp.json()
-
-        if "routes" not in data or len(data["routes"]) == 0:
-            raise Exception("No route returned from TomTom API: " + str(data))
-
-        summary = data["routes"][0]["summary"]
-
-        return summary["travelTimeInSeconds"]
+    def __init__(self, avg_speed_kmph=50.0):
+        self.speed = max(10.0, float(avg_speed_kmph))  # prevent zero/too small
 
     def get_best_destination(self, origin, destinations):
+        """
+        origin: (lat, lon)
+        destinations: [(lat, lon), ...]
+        returns: [{destination:(lat,lon), travel_time: seconds}, ...] sorted asc
+        """
         results = []
-
-        for dest in destinations:
-            try:
-                travel_time = self.get_travel_time_with_traffic(origin, dest)
-
-                results.append({
-                    "destination": dest,
-                    "travel_time": travel_time
-                })
-
-            except Exception as e:
-                print("Error for destination:", dest, e)
-
+        for d in destinations:
+            km = geodesic(origin, d).km
+            hours = km / self.speed
+            seconds = hours * 3600.0
+            results.append({"destination": d, "travel_time": seconds})
+        results.sort(key=lambda x: x["travel_time"])
         return results
