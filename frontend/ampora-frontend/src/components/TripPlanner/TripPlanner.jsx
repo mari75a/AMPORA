@@ -1,714 +1,475 @@
-// src/components/TripPlanner/TripPlanner.jsx
 /* global google */
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   GoogleMap,
   DirectionsRenderer,
-  Polyline,
-  Marker,
   Autocomplete,
+  Marker,
+  InfoWindow,
   useLoadScript,
 } from "@react-google-maps/api";
-import { motion } from "framer-motion";
 
-const ML_API_BASE = "http://127.0.0.1:8000";
-const BACKEND_API = "http://localhost:8083";
+import PulsingMarker from "../PulsingMarker";
+import elec from "../../assets/bolt.png";
+
+const BACKEND = "http://localhost:8083";
+const USER_ID = "8d8c1937-efc4-4cbe-9d60-635bb4f47486";
+
 const containerStyle = { width: "100%", height: "100%" };
 
-/* ---------------- Utilities ---------------- */
-
-// Fallback text → lat/lng using Google Geocoding API
-async function geocodeText(text, key) {
-  if (!text) return null;
-  const res = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-      text
-    )}&key=${key}`
-  );
-  const json = await res.json();
-  if (json.status !== "OK" || !json.results?.length) return null;
-  const loc = json.results[0].geometry.location;
-  return { lat: loc.lat, lng: loc.lng };
-}
-
-// Pick the shortest (by distance, then duration) route from a Google DirectionsResult
-function pickShortestRouteIndex(dirResult) {
-  if (!dirResult?.routes?.length) return 0;
-  let idxBest = 0;
-  let metersBest = Infinity;
-  let secondsBest = Infinity;
-
-  dirResult.routes.forEach((r, i) => {
-    const m = (r.legs || []).reduce((s, l) => s + (l.distance?.value || 0), 0);
-    const s = (r.legs || []).reduce((s, l) => s + (l.duration?.value || 0), 0);
-    if (m < metersBest || (m === metersBest && s < secondsBest)) {
-      metersBest = m;
-      secondsBest = s;
-      idxBest = i;
-    }
-  });
-  return idxBest;
-}
-
-// Try to extract userId from localStorage or JWT token payload
-function getLoggedUserId() {
-  const stored = localStorage.getItem("userId");
-  if (stored) return stored;
-  const token = localStorage.getItem("token");
-  if (!token) return null;
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-  try {
-    const payload = JSON.parse(atob(parts[1]));
-    // adjust claim name if your JWT uses another key
-    return payload?.userId || payload?.sub || payload?.uid || null;
-  } catch {
-    return null;
+/* ================= POLYLINE DECODER ================= */
+function decodePolyline(encoded) {
+  if (!encoded || typeof encoded !== "string") {
+    console.warn("Invalid polyline:", encoded);
+    return [];
   }
+
+  let points = [];
+  let index = 0, lat = 0, lng = 0;
+
+  while (index < encoded.length) {
+    let b, shift = 0, result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
+
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    lng += result & 1 ? ~(result >> 1) : result >> 1;
+
+    points.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+
+  return points;
 }
 
-/* ---------------- Component ---------------- */
 
+/* ================= COMPONENT ================= */
 export default function TripPlanner() {
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
+  const userId = localStorage.getItem("userId");
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
   });
 
-  // UI
-  const [loading, setLoading] = useState(false);
-  const [renderMode, setRenderMode] = useState("osrm"); // 'osrm' | 'google'
-  const [mapKey, setMapKey] = useState(0); // force map reload
-
-  // Inputs
+  const mapCenter = { lat: 7.8731, lng: 80.7718 };
+  const [avoidHighways, setAvoidHighways] = useState(false);
+  /* ===== START / END ===== */
   const [startText, setStartText] = useState("");
   const [endText, setEndText] = useState("");
-  const [startGeo, setStartGeo] = useState(null);
-  const [endGeo, setEndGeo] = useState(null);
-  const [stops, setStops] = useState([]); // {id, text, location?}
-
-  // Vehicles (from backend)
-  const [vehicles, setVehicles] = useState([]);
-  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
-
-  // Google route
-  const [directions, setDirections] = useState(null);
-  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
-
-  // OSRM / backend
-  const [stations, setStations] = useState([]);
-  const [bestStationIds, setBestStationIds] = useState(new Set());
-  const [osrmPath, setOsrmPath] = useState([]); // [[lat,lon], ...]
-  const [routeInfo, setRouteInfo] = useState(null);
-
-  // Station modal
-  const [selectedStation, setSelectedStation] = useState(null);
-
-  // refs
   const acStartRef = useRef(null);
   const acEndRef = useRef(null);
-  const stopRefs = useRef([]);
-  const mapRef = useRef(null);
 
-  const center = useMemo(() => ({ lat: 7.8731, lng: 80.7718 }), []);
+  /* ===== VEHICLE ===== */
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [batteryPct, setBatteryPct] = useState(100);
 
-  const onMapLoad = (map) => (mapRef.current = map);
+  /* ===== ROUTES ===== */
+  const [rawDirections, setRawDirections] = useState(null);
+  const [routes, setRoutes] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(null);
 
-  const onAutoComplete = (ref, setGeo, setText) => {
-    const place = ref.current?.getPlace?.();
-    if (!place?.geometry) return;
-    const p = {
-      lat: place.geometry.location.lat(),
-      lng: place.geometry.location.lng(),
-    };
-    setGeo(p);
-    if (place.formatted_address && setText) setText(place.formatted_address);
-  };
+  /* ===== STATIONS ===== */
+  const [stations, setStations] = useState([]);
+  const [selectedStation, setSelectedStation] = useState(null);
 
-  const addStop = () =>
-    setStops((prev) => [...prev, { id: Date.now(), text: "", location: null }]);
+  /* ===== RESULT ===== */
+  const [tripStatus, setTripStatus] = useState(null);
 
-  const removeStop = (id) =>
-    setStops((prev) => prev.filter((s) => s.id !== id));
-
-  // Add stop directly from modal (marker click)
-  const addStopFromStation = (station) => {
-    setStops((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: station.name || `${station.lat}, ${station.lon}`,
-        location: { lat: station.lat, lng: station.lon },
-      },
-    ]);
-    setSelectedStation(null);
-  };
-
-  function fitToOsrmPath(coords) {
-    if (!mapRef.current || !coords?.length) return;
-    const bounds = new google.maps.LatLngBounds();
-    coords.forEach(([lat, lon]) =>
-      bounds.extend(new google.maps.LatLng(lat, lon))
-    );
-    mapRef.current.fitBounds(bounds, 60);
+  /* ================= LOAD VEHICLES ================= */
+  useEffect(() => {
+    fetch(`${BACKEND}/api/vehicles/user/${userId}`)
+      .then((res) => res.json())
+      .then(setVehicles)
+      .catch(console.error);
+  }, []);
+  function latLng(p) {
+    return new google.maps.LatLng(p.lat, p.lng);
   }
 
-  // --------- Load vehicles for logged user ----------
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userId = getLoggedUserId();
+  function distanceKm(a, b) {
+    return (
+      google.maps.geometry.spherical.computeDistanceBetween(
+        latLng(a),
+        latLng(b)
+      ) / 1000
+    );
+  }
+  /* ================= FIND ROUTES ================= */
+  async function findRoutes() {
+    if (!startText || !endText) return alert("Select start and destination");
 
-    if (!userId || !token) return;
-
-    (async () => {
-      try {
-        const res = await fetch(
-          `${BACKEND_API}/api/vehicles/user/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await res.json();
-        if (Array.isArray(data) && data.length) {
-          setVehicles(data);
-          setSelectedVehicleId(data[0].vehicleId); // default to first vehicle
-        } else {
-          setVehicles([]);
-        }
-      } catch (e) {
-        console.error("Failed to load vehicles:", e);
-      }
-    })();
-  }, []);
-
-  const selectedVehicle = useMemo(
-    () => vehicles.find((v) => v.vehicleId === selectedVehicleId) || null,
-    [vehicles, selectedVehicleId]
-  );
-
-  // --------- Station scoring / best selection ----------
-  function chooseBestStations(stationsList, routeSummary, vehicle) {
-    if (!stationsList?.length || !routeSummary || !vehicle) {
-      return new Set();
-    }
-    const distanceKm = Number(routeSummary.distance_km) || 0;
-    const rangeKm = Number(vehicle.rangeKm) || 0; // full-charge range
-    const connector = (vehicle.connectorType || "").toUpperCase();
-
-    // How many stops likely needed (simple heuristic)
-    const requiredStops = Math.max(0, Math.ceil(distanceKm / Math.max(1, rangeKm)) - 1);
-    const K = Math.min(Math.max(requiredStops, 1), 5); // pick between 1..5
-
-    // Score stations
-    const scored = stationsList.map((s) => {
-      const maxKw = s.max_power_kw || 0;
-      const distR = s.distance_to_route_km ?? 999;
-      const status = (s.status || "ACTIVE").toUpperCase();
-      const name = (s.name || "").toUpperCase();
-
-      let score = 0;
-      // connector match (very important)
-      if (name.includes(connector) || (s.connector_types || []).map(String).join("|").toUpperCase().includes(connector)) {
-        score += 3;
-      }
-      // fast DC preference
-      if (maxKw >= 90) score += 3;
-      else if (maxKw >= 60) score += 2;
-      else if (maxKw >= 22) score += 1;
-
-      // near the route
-      if (distR < 2) score += 2;
-      else if (distR < 5) score += 1;
-
-      // status
-      if (status === "ACTIVE" || status === "OPEN") score += 1;
-
-      return { s, score };
+    const service = new google.maps.DirectionsService();
+    const res = await service.route({
+      origin: startText,
+      destination: endText,
+      travelMode: google.maps.TravelMode.DRIVING,
+      provideRouteAlternatives: true,
+      avoidHighways: avoidHighways,
     });
 
-    scored.sort((a, b) => b.score - a.score);
-
-    const best = new Set(scored.slice(0, K).map((x) => x.s.station_id));
-    return best;
+    setRawDirections(res);
+    setRoutes(res.routes);
+    setSelectedRouteIndex(null);
+    setStations([]);
+    setTripStatus(null);
   }
 
-  /* ---------------- Main: Plan Route ---------------- */
-  async function planRoute() {
-    if (!isLoaded) return;
 
-    setLoading(true);
+  async function selectRoute(index) {
+    setSelectedRouteIndex(index);
+    setTripStatus(null);
 
-    // 🔥 RESET MAP COMPLETELY — fixes leftover overlays after repeated plans
-    setMapKey((k) => k + 1);
+    const route = routes[index];
 
-    // Reset old data
-    setDirections(null);
-    setSelectedRouteIndex(0);
-    setOsrmPath([]);
-    setStations([]);
-    setBestStationIds(new Set());
-    setRouteInfo(null);
-    setSelectedStation(null);
-    stopRefs.current = [];
+    const polyline =
+      route.overview_polyline?.points ||
+      route.overview_polyline?.encodedPolyline ||
+      route.overview_polyline;
 
-    try {
-      const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const decoded = decodePolyline(polyline);
 
-      const s = startGeo || (await geocodeText(startText, key));
-      const e = endGeo || (await geocodeText(endText, key));
-      if (!s || !e) {
-        alert("Please provide valid Start and Destination.");
-        setLoading(false);
-        return;
-      }
+    if (decoded.length === 0) {
+      alert("Route polyline error. Try another route.");
+      return;
+    }
 
-      const wp = [];
-      for (const st of stops) {
-        if (st.location) wp.push(st.location);
-        else if (st.text?.trim()) {
-          const g = await geocodeText(st.text, key);
-          if (g) wp.push(g);
-        }
-      }
+    const resp = await fetch(`${BACKEND}/api/trip/stations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        polylinePoints: decoded.map(p => [p.lat, p.lng]),
+      }),
+    });
 
-      // Google route (for optional comparison / rendering)
-      const svc = new google.maps.DirectionsService();
-      const gResult = await svc.route({
-        origin: s,
-        destination: e,
-        waypoints: wp.map((p) => ({ location: p, stopover: true })),
-        travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true,
-      });
+    const data = await resp.json();
+    setStations(data.stations || []);
 
-      const bestIdx = pickShortestRouteIndex(gResult);
-      setDirections(gResult);
-      setSelectedRouteIndex(bestIdx);
+    evaluateTrip(route, data.stations || []);
+  }
 
-      // OSRM route via ML backend
-      const resp = await fetch(`${ML_API_BASE}/api/route`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start: s, end: e, stops: wp }),
-      });
-      const data = await resp.json();
 
-      if (!data.success) {
-        console.error("Backend error:", data.error);
-        setOsrmPath([]);
-        setStations([]);
-        setBestStationIds(new Set());
+
+  function evaluateTrip(route, stations) {
+    if (!selectedVehicle) {
+      setTripStatus({ ok: false, msg: "Select a vehicle first" });
+      return;
+    }
+
+    const fullRangeKm = selectedVehicle.rangeKm;
+    const availableKm = (batteryPct / 100) * fullRangeKm;
+
+
+    const routeDistanceKm = route.legs[0].distance.value / 1000;
+
+
+    if (stations.length === 0) {
+      if (availableKm >= routeDistanceKm) {
+        setTripStatus({
+          ok: true,
+          msg: "Trip possible without charging",
+        });
       } else {
-        const path = data.routes?.[0]?.path || [];
-        setOsrmPath(path);
-        setStations(data.nearby_stations || []);
-        setRouteInfo(data.routes?.[0] || null);
-
-        // Fit map to OSRM polyline (the one backend used)
-        fitToOsrmPath(path);
-
-        // Compute best stations using the selected vehicle
-        if (selectedVehicle && data.routes?.[0]) {
-          const bestIds = chooseBestStations(
-            data.nearby_stations || [],
-            data.routes[0],
-            selectedVehicle
-          );
-          setBestStationIds(bestIds);
-        }
+        setTripStatus({
+          ok: false,
+          msg: `Trip NOT possible. Need ${routeDistanceKm.toFixed(
+            1
+          )} km but only ${availableKm.toFixed(1)} km available.`,
+        });
       }
+      return;
+    }
 
-      setRenderMode("osrm");
-    } catch (err) {
-      console.error("Routing error:", err);
-    } finally {
-      setLoading(false);
+
+    const firstStation = stations[0];
+
+
+    const distanceToFirstStationKm = firstStation.distanceFromStartKm;
+
+    if (availableKm >= distanceToFirstStationKm) {
+      setTripStatus({
+        ok: true,
+        msg: "Trip possible (can reach first charging station)",
+      });
+    } else {
+      setTripStatus({
+        ok: false,
+        msg: `Trip NOT possible. Cannot reach first charging station (${distanceToFirstStationKm.toFixed(
+          1
+        )} km). Available range is ${availableKm.toFixed(1)} km.`,
+      });
     }
   }
 
-  /* ---------------- Marker Icons ---------------- */
-  // Simple SVG pins with two colors: emerald (best) and steel-blue (others)
-  const svgPin = (hex) =>
-    {
-      const url =
-        `data:image/svg+xml;charset=UTF-8,` +
-        encodeURIComponent(`
-          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="${hex}" stroke="white" stroke-width="1.2">
-            <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
-          </svg>
-        `);
-      return {
-        url,
-        scaledSize: new google.maps.Size(36, 36),
-        anchor: new google.maps.Point(18, 36),
-      };
-    };
 
-  const iconBest = isLoaded ? svgPin("#10B981") : undefined;   // emerald
-  const iconOther = isLoaded ? svgPin("#3B82F6") : undefined;  // blue-500
 
-  /* ---------------- Render ---------------- */
+  const sriLankaAutocompleteOptions = {
+    componentRestrictions: { country: "lk" }, // Sri Lanka
+    fields: ["formatted_address", "geometry", "name"],
+    types: ["geocode"], // cities, towns, roads, etc.
+  };
+
+  if (!isLoaded) return <div>Loading maps…</div>;
+
   return (
-    <div className="w-screen min-h-screen mt-20 bg-gradient-to-b from-emerald-50 via-teal-50 to-white relative">
-      {/* THINKING OVERLAY */}
-      {loading && (
-        <div className="absolute inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white/90 px-10 py-6 rounded-2xl shadow-xl text-center"
-          >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-              className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full mx-auto"
-            />
-            <p className="mt-3 text-emerald-700 font-semibold text-lg">Thinking…</p>
-            <p className="text-xs text-emerald-600">
-              Calculating optimal route & charging stations
-            </p>
-          </motion.div>
-        </div>
-      )}
+    <div className="min-h-screen bg-[#edffff] p-8 space-y-6">
+      <div className="relative h-[34vh] rounded-b-[70px] overflow-hidden bg-gradient-to-tr from-teal-900 via-emerald-800 to-teal-700"> <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120"> <path fill="rgba(255,255,255,0.15)" d="M0,64L60,58.7C120,53,240,43,360,53.3C480,64,600,96,720,101.3C840,107,960,85,1080,69.3C1200,53,1320,43,1380,37.3L1440,32V120H0Z" /> </svg> <div className="relative h-full flex flex-col items-center justify-center text-center px-6"> <h1 className="text-5xl md:text-6xl font-extrabold text-white"> EV Trip <span className="text-emerald-300">Planner</span> </h1> <p className="mt-3 text-emerald-100 text-lg"> Smart • Efficient • Stress-Free </p> </div> </div>
+      {/* ===== INPUT PANEL ===== */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-lg space-y-6"
+      >
+        <div className="bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-lg space-y-6 border border-emerald-100">
+          <h2 className="text-lg font-semibold text-gray-700">
+            Plan Your Trip
+          </h2>
 
-      {/* INPUTS */}
-      <div className="max-w-6xl mx-auto px-4 pt-6 space-y-4">
-        {/* Vehicle selector */}
-        <div className="bg-white/80 p-3 border border-emerald-200 rounded-xl">
-          <label className="text-xs font-semibold text-emerald-700">Vehicle</label>
-          <div className="mt-1">
-            {vehicles.length === 0 ? (
-              <div className="text-sm text-emerald-900/70">
-                No vehicles found. Add one in{" "}
-                <a href="/vehicles" className="underline text-emerald-700">Vehicle Manager</a>.
-              </div>
-            ) : (
+          <div className=" grid md:grid-cols-2 gap-4">
+            <Autocomplete
+              onLoad={(r) => (acStartRef.current = r)}
+              onPlaceChanged={() =>
+                setStartText(acStartRef.current.getPlace()?.formatted_address || "")
+              }
+              options={sriLankaAutocompleteOptions}
+            >
+              <input
+                className="p-4 w-full rounded-2xl bg-[#edffff] outline-none focus:ring-2 focus:ring-emerald-400"
+                placeholder="Start location (Sri Lanka only)"
+              />
+            </Autocomplete>
+            <Autocomplete
+              onLoad={(r) => (acEndRef.current = r)}
+              onPlaceChanged={() =>
+                setEndText(acEndRef.current.getPlace()?.formatted_address || "")
+              }
+              options={sriLankaAutocompleteOptions}
+            >
+              <input
+                className="p-4 w-full rounded-2xl bg-[#edffff] outline-none focus:ring-2 focus:ring-emerald-400"
+                placeholder="Destination (Sri Lanka only)"
+              />
+            </Autocomplete>
+
+          </div>
+          <div className="flex items-center justify-between bg-[#edffff] rounded-2xl px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-gray-700">
+                Avoid Highways
+              </p>
+              <p className="text-xs text-gray-500">
+                Prefer city & scenic roads
+              </p>
+            </div>
+
+            <button
+              onClick={() => setAvoidHighways((v) => !v)}
+              className={`relative w-14 h-8 rounded-full transition-colors ${avoidHighways ? "bg-emerald-500" : "bg-gray-300"
+                }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${avoidHighways ? "translate-x-6" : ""
+                  }`}
+              />
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="w-full flex flex-col">
               <select
-                value={selectedVehicleId || ""}
-                onChange={(e) => setSelectedVehicleId(e.target.value)}
-                className="w-full px-2 py-2 rounded-lg outline-none border border-emerald-300 bg-white/90 text-black"
+                className="p-4 rounded-2xl bg-[#edffff] outline-none"
+                onChange={(e) =>
+                  setSelectedVehicle(
+                    vehicles.find(v => v.vehicleId === e.target.value)
+                  )
+                }
               >
-                {vehicles.map((v) => (
+                <option value="">Select Vehicle</option>
+                {isLoggedIn && vehicles.map((v) => (
                   <option key={v.vehicleId} value={v.vehicleId}>
-                    {v.brand_name} {v.model_name} • {Number(v.variant)} kWh • {v.connectorType} • {v.plate}
+                    {v.brand_name} {v.model_name} ({v.rangeKm} km range)
                   </option>
                 ))}
+                {isLoggedIn && vehicles.length === 0 && (
+                  <option >
+                    <a href="/vehicles">No vehicles found – add a vehicle first</a>
+                  </option>
+                )}
               </select>
-            )}
-          </div>
-
-          {selectedVehicle && (
-            <div className="mt-2 text-xs text-emerald-900/80">
-              <span className="mr-3">
-                <b>Range:</b> {Number(selectedVehicle.rangeKm)} km
-              </span>
-              <span className="mr-3">
-                <b>Battery:</b> {Number(selectedVehicle.variant)} kWh
-              </span>
-              <span>
-                <b>Connector:</b> {selectedVehicle.connectorType}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Start / End / Button */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-          {/* START */}
-          <div className="bg-white/80 p-3 border border-emerald-200 rounded-xl">
-            <label className="text-xs font-semibold text-emerald-700">Start</label>
-            {isLoaded && (
-              <Autocomplete
-                onLoad={(ref) => (acStartRef.current = ref)}
-                onPlaceChanged={() =>
-                  onAutoComplete(acStartRef, setStartGeo, setStartText)
-                }
-              >
-                <input
-                  className="w-full px-2 py-2 rounded-lg outline-none text-black"
-                  placeholder="Colombo, Sri Lanka"
-                  value={startText}
-                  onChange={(e) => setStartText(e.target.value)}
-                />
-              </Autocomplete>
-            )}
-          </div>
-
-          {/* DESTINATION */}
-          <div className="bg-white/80 p-3 border border-emerald-200 rounded-xl">
-            <label className="text-xs font-semibold text-emerald-700">
-              Destination
-            </label>
-            {isLoaded && (
-              <Autocomplete
-                onLoad={(ref) => (acEndRef.current = ref)}
-                onPlaceChanged={() =>
-                  onAutoComplete(acEndRef, setEndGeo, setEndText)
-                }
-              >
-                <input
-                  className="w-full px-2 py-2 rounded-lg outline-none text-black"
-                  placeholder="Kandy, Sri Lanka"
-                  value={endText}
-                  onChange={(e) => setEndText(e.target.value)}
-                />
-              </Autocomplete>
-            )}
-          </div>
-
-          <button
-            onClick={planRoute}
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold shadow"
-          >
-            Plan Trip
-          </button>
-        </div>
-
-        {/* STOPS */}
-        <div className="bg-white/70 p-4 rounded-xl border border-emerald-200">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-emerald-700 mb-2">Add More Stops</h3>
-
-            {/* Render mode toggle */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-emerald-800/80">Render:</span>
-              <button
-                onClick={() => setRenderMode("osrm")}
-                className={`px-3 py-1 rounded-lg border ${
-                  renderMode === "osrm"
-                    ? "bg-emerald-600 text-white border-emerald-600"
-                    : "border-emerald-300 text-emerald-700"
-                }`}
-              >
-                OSRM
-              </button>
-              <button
-                onClick={() => setRenderMode("google")}
-                className={`px-3 py-1 rounded-lg border ${
-                  renderMode === "google"
-                    ? "bg-emerald-600 text-white border-emerald-600"
-                    : "border-emerald-300 text-emerald-700"
-                }`}
-              >
-                Google
-              </button>
-            </div>
-          </div>
-
-          {stops.map((st, index) => (
-            <div key={st.id} className="flex items-center gap-2 mb-2">
-              <div className="flex-1 bg-white/80 p-2 border rounded-lg">
-                <Autocomplete
-                  onLoad={(ref) => (stopRefs.current[index] = ref)}
-                  onPlaceChanged={() => {
-                    const place = stopRefs.current[index].getPlace();
-                    if (place?.geometry) {
-                      const updated = [...stops];
-                      updated[index].location = {
-                        lat: place.geometry.location.lat(),
-                        lng: place.geometry.location.lng(),
-                      };
-                      updated[index].text =
-                        place.formatted_address || updated[index].text;
-                      setStops(updated);
-                    }
-                  }}
+              {/* ✅ ACTION LINK OUTSIDE */}
+              {isLoggedIn && vehicles.length === 0 && (
+                <a
+                  href="/vehicles"
+                  className="mt-2 inline-block text-sm text-[#00d491] hover:underline"
                 >
-                  <input
-                    className="w-full px-2 py-2 rounded-lg outline-none text-black"
-                    placeholder="Add stop…"
-                    value={st.text}
-                    onChange={(e) => {
-                      const updated = [...stops];
-                      updated[index].text = e.target.value;
-                      setStops(updated);
-                    }}
-                  />
-                </Autocomplete>
+                  Add your first vehicle →
+                </a>
+              )}
+
+              {!isLoggedIn && (
+                <a
+                  href="/login"
+                  className="mt-2 inline-block text-sm text-[#00d491] hover:underline"
+                >
+                  Log in to continue →
+                </a>
+              )}
+
+            </div>
+
+
+            <div className="bg-[#edffff] rounded-2xl p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Battery Level
+                </span>
+                <span className="text-sm font-semibold text-emerald-700">
+                  {batteryPct}%
+                </span>
               </div>
 
-              <button
-                onClick={() => removeStop(st.id)}
-                className="bg-red-500 text-white px-3 py-2 rounded-lg"
-                title="Remove stop"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-
-          <button
-            onClick={addStop}
-            className="mt-2 px-4 py-2 border border-emerald-400 text-emerald-700 rounded-lg hover:bg-emerald-100"
-          >
-            + Add Stop
-          </button>
-        </div>
-      </div>
-
-      {/* MAP */}
-      <div
-        className={`max-w-6xl mx-auto h-[70vh] mt-4 rounded-2xl overflow-hidden border border-emerald-200 shadow ${
-          loading ? "blur-sm" : ""
-        }`}
-      >
-        {isLoaded && (
-          <GoogleMap
-            key={mapKey} // 🔥 FORCE MAP RELOAD FIX
-            onLoad={onMapLoad}
-            mapContainerStyle={containerStyle}
-            center={startGeo || center}
-            zoom={7}
-            options={{
-              streetViewControl: false,
-              mapTypeControl: false,
-              fullscreenControl: false,
-            }}
-          >
-            {/* OSRM polyline OR Google Directions */}
-            {renderMode === "osrm" && osrmPath?.length > 0 && (
-              <Polyline
-                path={osrmPath.map(([lat, lon]) => ({ lat, lng: lon }))}
-                options={{
-                  geodesic: true,
-                  strokeColor: "#10B981", // emerald-500
-                  strokeOpacity: 0.95,
-                  strokeWeight: 6,
-                }}
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={batteryPct}
+                onChange={(e) => setBatteryPct(Number(e.target.value))}
+                className="w-full accent-emerald-500"
               />
-            )}
 
-            {renderMode === "google" && directions && (
-              <DirectionsRenderer
-                directions={directions}
-                options={{
-                  routeIndex: selectedRouteIndex,
-                  suppressMarkers: false,
-                  polylineOptions: {
-                    strokeOpacity: 0.9,
-                    strokeWeight: 6,
-                  },
-                }}
-              />
-            )}
-
-            {/* Station markers with modal trigger */}
-            {stations.map((s) => {
-              const isBest = bestStationIds.has(s.station_id);
-              return (
-                <Marker
-                  key={s.station_id}
-                  position={{ lat: s.lat, lng: s.lon }}
-                  title={`${s.name} • ${s.max_power_kw || 0} kW`}
-                  icon={isBest ? iconBest : iconOther}
-                  onClick={() => setSelectedStation(s)}
-                />
-              );
-            })}
-          </GoogleMap>
-        )}
-      </div>
-
-      {/* STATION POPUP MODAL */}
-      {selectedStation && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[999] flex items-center justify-center">
-          <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl shadow-xl p-6 w-[90%] max-w-md relative"
-          >
-            {/* Close */}
-            <button
-              onClick={() => setSelectedStation(null)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black text-xl"
-              aria-label="Close"
-            >
-              ×
-            </button>
-
-            <h2 className="text-xl font-bold text-emerald-700">
-              {selectedStation.name}
-            </h2>
-
-            <p className="text-sm text-gray-700 mt-1">
-              {selectedStation.address || "No address available"}
-            </p>
-
-            <div className="mt-4 space-y-2 text-gray-800 text-sm">
-              <p><b>Max Power:</b> {selectedStation.max_power_kw || 0} kW</p>
-              {selectedStation.distance_to_route_km != null && (
-                <p><b>Distance from route:</b> {selectedStation.distance_to_route_km} km</p>
+              {selectedVehicle && (
+                <p className="mt-2 text-xs text-gray-600">
+                  Estimated range:
+                  <span className="font-semibold ml-1">
+                    {((batteryPct / 100) * selectedVehicle.rangeKm).toFixed(0)} km
+                  </span>
+                </p>
               )}
-              <p><b>Latitude:</b> {selectedStation.lat}</p>
-              <p><b>Longitude:</b> {selectedStation.lon}</p>
             </div>
 
-            <div className="mt-5 flex gap-3">
-              <button
-                onClick={() => addStopFromStation(selectedStation)}
-                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg shadow hover:bg-emerald-700"
-              >
-                Add as Stop
-              </button>
+            <button
+              onClick={findRoutes}
+              className="rounded-2xl bg-emerald-500 text-white font-semibold shadow-md hover:scale-[1.02] transition"
+            >
+              Find Routes
+            </button>
+          </div>
+        </div>
+      </motion.div>
+      {/* ===== STATUS ===== */}
+      <AnimatePresence>
+        {tripStatus && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25 }}
+            className={`p-5 rounded-2xl text-center font-semibold shadow-md ${tripStatus.ok
+              ? "bg-emerald-100 text-emerald-900"
+              : "bg-red-100 text-red-900"
+              }`}
+          >
+            {tripStatus.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="grid md:grid-cols-4 gap-6">
 
-              <button
-                onClick={() => {
-                  window.open(
-                    `https://www.google.com/maps/dir/?api=1&destination=${selectedStation.lat},${selectedStation.lon}`,
-                    "_blank"
-                  );
-                }}
-                className="flex-1 bg-gray-200 text-gray-900 py-2 rounded-lg shadow hover:bg-gray-300"
+        {/* ROUTES PANEL */}
+        <div className="md:col-span-1 bg-white rounded-3xl p-4 shadow-md space-y-3 max-h-[550px] overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="md:col-span-1 bg-white/90 backdrop-blur-xl rounded-3xl p-4 shadow-md"
+          >
+            <h3 className="font-semibold text-gray-700 mb-2">
+              Available Routes
+            </h3>
+
+
+            {routes.map((r, i) => (
+              <motion.button
+                key={i}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => selectRoute(i)}
+                className={`w-full p-4 rounded-2xl text-left transition ${selectedRouteIndex === i
+                  ? "bg-emerald-500 text-white"
+                  : "bg-[#edffff]"
+                  }`}
               >
-                Navigate
-              </button>
-            </div>
+                <div className="font-medium">Route {i + 1}</div>
+                <div className="text-sm opacity-80">
+                  {(r.legs[0].distance.value / 1000).toFixed(1)} km
+                </div>
+              </motion.button>
+            ))}
           </motion.div>
         </div>
-      )}
 
-      {/* SUMMARY */}
-      {routeInfo && (
-        <div className="max-w-6xl mx-auto mt-6 grid md:grid-cols-3 gap-4 px-4 pb-10">
-          <div className="bg-white/80 backdrop-blur p-4 rounded-xl border border-emerald-200">
-            <h3 className="font-bold text-emerald-700">Route Summary</h3>
-            <p className="mt-2 text-sm text-emerald-900/80">
-              Distance: <b>{routeInfo.distance_km} km</b>
-            </p>
-            <p className="text-sm text-emerald-900/80">
-              Duration: <b>{routeInfo.duration_min} min</b>
-            </p>
-          </div>
-          <div className="md:col-span-2 bg-white/80 backdrop-blur p-4 rounded-xl border border-emerald-200">
-            <h3 className="font-bold text-emerald-700">Nearby Stations</h3>
-            <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {stations.map((s) => {
-                const isBest = bestStationIds.has(s.station_id);
-                return (
-                  <div key={s.station_id} className={`rounded-xl border ${isBest ? "border-emerald-400" : "border-blue-200"} bg-white p-3`}>
-                    <p className={`font-semibold ${isBest ? "text-emerald-700" : "text-blue-700"}`}>{s.name}</p>
-                    <p className="text-xs text-emerald-900/70">{s.address || "—"}</p>
-                    <div className="text-xs mt-1 text-emerald-900/80">
-                      <div>Max Power: <b>{s.max_power_kw || 0} kW</b></div>
-                      {s.distance_to_route_km != null && (
-                        <div>Distance to route: <b>{s.distance_to_route_km} km</b></div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => setSelectedStation(s)}
-                      className="mt-2 w-full text-sm px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                    >
-                      View details
-                    </button>
+        {/* MAP PANEL */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="md:col-span-3 h-[550px] rounded-3xl overflow-hidden shadow-2xl"
+        >
+          <div className="md:col-span-3 h-[550px] rounded-3xl overflow-hidden shadow-xl">
+
+            <GoogleMap
+              mapContainerStyle={containerStyle}
+              center={mapCenter}
+              zoom={7}
+            >
+              {selectedRouteIndex !== null && rawDirections && (
+                <DirectionsRenderer
+                  directions={{
+                    ...rawDirections,
+                    routes: [rawDirections.routes[selectedRouteIndex]],
+                  }}
+                />
+              )}
+
+              {stations.map((s) => (
+                <PulsingMarker
+                  key={s.stationId}
+                  position={{ lat: s.lat, lng: s.lon }}
+                  onClick={() => setSelectedStation(s)}
+                />
+              ))}
+
+              {selectedStation && (
+                <InfoWindow
+                  position={{ lat: selectedStation.lat, lng: selectedStation.lon }}
+                  onCloseClick={() => setSelectedStation(null)}
+                >
+                  <div className="text-sm">
+                    <strong>{selectedStation.name}</strong>
+                    <p>{selectedStation.powerKw} kW</p>
                   </div>
-                );
-              })}
-            </div>
+                </InfoWindow>
+              )}
+            </GoogleMap>
           </div>
-        </div>
-      )}
+        </motion.div>
+      </div>
+
+
+
+
     </div>
   );
 }

@@ -1,8 +1,7 @@
-// src/pages/SubscriptionPlans.jsx
-import React from "react";
 import { FiCheck } from "react-icons/fi";
 
-const glass = "backdrop-blur-xl bg-white/70 border border-emerald-200/60 shadow-[0_8px_35px_rgba(16,185,129,0.12)]";
+const glass =
+  "backdrop-blur-xl bg-white/70 border border-emerald-200/60 shadow-[0_8px_35px_rgba(16,185,129,0.12)]";
 
 const plans = [
   {
@@ -15,14 +14,24 @@ const plans = [
   {
     name: "Premium",
     price: "LKR 4,999/mo",
-    features: ["Smart routing", "Multi-vehicle", "Booking priority", "Energy analytics"],
+    features: [
+      "Smart routing",
+      "Multi-vehicle",
+      "Booking priority",
+      "Energy analytics",
+    ],
     cta: "Get Premium",
     popular: true,
   },
   {
     name: "Enterprise",
     price: "Custom",
-    features: ["Fleet tools", "Admin console", "Custom billing", "Priority support"],
+    features: [
+      "Fleet tools",
+      "Admin console",
+      "Custom billing",
+      "Priority support",
+    ],
     cta: "Contact Sales",
     popular: false,
   },
@@ -32,8 +41,12 @@ export default function SubscriptionPlans() {
   return (
     <div className="w-screen min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-white text-gray-900">
       <div className="mx-auto w-11/12 max-w-6xl py-10">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-700 text-center">Plans & Subscription</h1>
-        <p className="text-center text-emerald-900/70 mt-2">Pick the plan that fits your EV lifestyle.</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-emerald-700 text-center">
+          Plans & Subscription
+        </h1>
+        <p className="text-center text-emerald-900/70 mt-2">
+          Pick the plan that fits your EV lifestyle.
+        </p>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((p) => (
@@ -48,8 +61,12 @@ export default function SubscriptionPlans() {
                   Most Popular
                 </div>
               )}
-              <h3 className="text-xl font-extrabold text-emerald-800">{p.name}</h3>
-              <div className="text-3xl font-extrabold text-emerald-700 mt-2">{p.price}</div>
+              <h3 className="text-xl font-extrabold text-emerald-800">
+                {p.name}
+              </h3>
+              <div className="text-3xl font-extrabold text-emerald-700 mt-2">
+                {p.price}
+              </div>
 
               <ul className="mt-4 space-y-2 text-sm">
                 {p.features.map((f) => (

@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
+
 import {
   fetchStations,
   createStation,
   updateStation,
   deleteStation as deleteStationApi,
 } from "./api/stationService";
+import Modal from "./component/Modal";
+import { fetchUser } from "./api/userService";
 
 export default function ChargerStationPage() {
+  const location = useLocation();
   const [stations, setStations] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingStationId, setEditingStationId] = useState(null); // store stationId
@@ -15,6 +20,7 @@ export default function ChargerStationPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -22,6 +28,7 @@ export default function ChargerStationPage() {
     latitude: "",
     longitude: "",
     status: "",
+    operatorId: "",
   });
 
   // Load stations from backend on mount
@@ -41,6 +48,12 @@ export default function ChargerStationPage() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.openAddModal) {
+      openAddModal();
+    }
+  }, [location.state]);
 
   const totalStations = stations.length;
   const activeStations = stations.filter((s) => s.status === "ACTIVE").length;
@@ -103,6 +116,7 @@ export default function ChargerStationPage() {
         latitude: form.latitude === "" ? null : Number(form.latitude),
         longitude: form.longitude === "" ? null : Number(form.longitude),
         status: form.status,
+        operatorId: form.operatorId,
       };
 
       if (editingStationId === null) {
@@ -138,6 +152,23 @@ export default function ChargerStationPage() {
       setError(err.message || "Failed to delete station");
     }
   };
+
+  useEffect(() => {
+    const loads = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchUser();
+        setUsers(data || []);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Failed to load users");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loads();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
@@ -208,7 +239,6 @@ export default function ChargerStationPage() {
           </div>
         </div>
 
-        {/* Table Section */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800">
@@ -224,7 +254,7 @@ export default function ChargerStationPage() {
               />
               <button
                 onClick={openAddModal}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
+                className="addBtn px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
               >
                 <Plus size={20} /> Add Station
               </button>
@@ -330,86 +360,115 @@ export default function ChargerStationPage() {
         </div>
 
         {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {editingStationId !== null
-                    ? "Edit Station"
-                    : "Add New Station"}
-                </h2>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition"
-                >
-                  <X size={24} />
-                </button>
-              </div>
+        <Modal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          title={editingStationId ? "Edit Station" : "Add Station"}
+          footer={
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveStation}
+                disabled={saving}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          }
+        >
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Latitude
+              </label>
+              <input
+                type="text"
+                name="latitude"
+                value={form.latitude}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Longitude
+              </label>
+              <input
+                type="text"
+                name="longitude"
+                value={form.longitude}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              >
+                <option value="">Select status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Operator
+              </label>
+              <select
+                name="operatorId"
+                value={form.operatorId}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+              >
+                <option value="">Select operator</option>
 
-              <div className="p-6 space-y-4">
-                <input
-                  name="name"
-                  placeholder="Name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-                <input
-                  name="address"
-                  placeholder="Address"
-                  value={form.address}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-                <input
-                  name="latitude"
-                  placeholder="Latitude"
-                  type="number"
-                  value={form.latitude}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-                <input
-                  name="longitude"
-                  placeholder="Longitude"
-                  type="number"
-                  value={form.longitude}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-                <input
-                  name="status"
-                  placeholder='Status (e.g. "Active" or "Inactive")'
-                  value={form.status}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                />
-              </div>
-
-              <div className="p-6 border-t border-gray-100 flex gap-3">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveStation}
-                  className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
-                  disabled={saving}
-                >
-                  {saving
-                    ? "Saving..."
-                    : editingStationId !== null
-                    ? "Update Station"
-                    : "Add Station"}
-                </button>
-              </div>
+                {users
+                  .filter((user) => user.role === "OPERATOR")
+                  .map((user) => (
+                    <option key={user.userId} value={user.userId}>
+                      {user.fullName} ({user.email})
+                    </option>
+                  ))}
+              </select>
             </div>
           </div>
-        )}
+        </Modal>
       </div>
     </div>
   );

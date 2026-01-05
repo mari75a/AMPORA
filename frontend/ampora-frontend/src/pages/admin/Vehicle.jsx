@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import Modal from "./component/Modal";
+import { useLocation } from "react-router-dom";
+
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import {
   fetchVehicles,
@@ -8,23 +11,25 @@ import {
 } from "./api/vehicleService";
 
 const emptyForm = {
-  vehicleId: "",
   model: "",
   batteryCapacityKwh: "",
   efficiencyKmPerKwh: "",
   connectorType: "",
   userId: "",
 };
+import { fetchUser } from "./api/userService";
 
 export default function Vehicle() {
+  const location = useLocation();
   const [vehicles, setVehicles] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [editId, setEditId] = useState(null); // vehicleId we’re editing
+  const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -43,6 +48,12 @@ export default function Vehicle() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.openAddModal) {
+      openAddModal();
+    }
+  }, [location.state]);
 
   const totalVehicles = vehicles.length;
 
@@ -97,7 +108,6 @@ export default function Vehicle() {
 
   const openEditModal = (vehicle) => {
     setForm({
-      vehicleId: vehicle.vehicleId ?? "",
       model: vehicle.model ?? "",
       batteryCapacityKwh: vehicle.batteryCapacityKwh ?? "",
       efficiencyKmPerKwh: vehicle.efficiencyKmPerKwh ?? "",
@@ -151,9 +161,34 @@ export default function Vehicle() {
     }
   };
 
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const users = await fetchUser();
+        setUsers(users || []);
+      } catch (err) {
+        console.error("Failed to load users for vehicles:", err);
+      }
+    };
+    loadUsers();
+  }, []);
+
+  useEffect(() => {
+    if (!showModal) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowModal(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showModal]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 m-12">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-16 my-20">
+      <div className="max-w-7xl ">
         {/* Error / Loading */}
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -246,7 +281,7 @@ export default function Vehicle() {
 
               <button
                 onClick={openAddModal}
-                className="px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
+                className="addBtn px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm"
               >
                 <Plus size={20} /> Add Vehicle
               </button>
@@ -342,92 +377,99 @@ export default function Vehicle() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">
-                {editId ? "Edit Vehicle" : "Add New Vehicle"}
-              </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <input
-                name="vehicleId"
-                placeholder="Vehicle ID"
-                value={form.vehicleId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                disabled={!!editId} // avoid changing ID on edit
-              />
-              <input
-                name="model"
-                placeholder="Model"
-                value={form.model}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
-              <input
-                name="batteryCapacityKwh"
-                placeholder="Battery Capacity (kWh)"
-                type="number"
-                value={form.batteryCapacityKwh}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
-              <input
-                name="efficiencyKmPerKwh"
-                placeholder="Efficiency (km/kWh)"
-                type="number"
-                value={form.efficiencyKmPerKwh}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
-              <input
-                name="connectorType"
-                placeholder="Connector Type"
-                value={form.connectorType}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
-              <input
-                name="userId"
-                placeholder="User ID"
-                value={form.userId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
-            </div>
-
-            <div className="p-6 border-t border-gray-100 flex gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveVehicle}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
-                disabled={saving}
-              >
-                {saving
-                  ? "Saving..."
-                  : editId
-                  ? "Update Vehicle"
-                  : "Add Vehicle"}
-              </button>
-            </div>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editId ? "Edit Vehicle" : "Add New Vehicle"}
+        footer={
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowModal(false)}
+              className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-100 transition font-medium"
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveVehicle}
+              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition font-medium shadow-sm disabled:opacity-60"
+              disabled={saving}
+            >
+              {saving ? "Saving..." : editId ? "Update Vehicle" : "Add Vehicle"}
+            </button>
           </div>
+        }
+      >
+        <div className="space-y-4">
+          <select
+            name="model"
+            value={form.model}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+          >
+            <option value="">Select Model</option>
+            <option value="Model S">Model S</option>
+            <option value="Model 3">Model 3</option>
+            <option value="Model X">Model X</option>
+            <option value="Model Y">Model Y</option>
+            <option value="Nissan Leaf">Nissan Leaf</option>
+            <option value="Chevrolet Bolt">Chevrolet Bolt</option>
+            <option value="Volkswagen ID.4">Volkswagen ID.4</option>
+            <option value="Hyundai Kona Electric">Hyundai Kona Electric</option>
+            <option value="Kia EV6">Kia EV6</option>
+            <option value="BYD Seal">BYD Seal</option>
+            <option value="BYD Atto 3 (Yuan Plus)">
+              BYD Atto 3 (Yuan Plus)
+            </option>
+            <option value="BYD Dolphin">BYD Dolphin</option>
+          </select>
+
+          <input
+            name="batteryCapacityKwh"
+            placeholder="Battery Capacity (kWh)"
+            type="number"
+            value={form.batteryCapacityKwh}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+          />
+
+          <input
+            name="efficiencyKmPerKwh"
+            placeholder="Efficiency (km/kWh)"
+            type="number"
+            value={form.efficiencyKmPerKwh}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+          />
+
+          <select
+            name="connectorType"
+            value={form.connectorType}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+          >
+            <option value="">Select Connector Type</option>
+            <option value="Type1">Type1</option>
+            <option value="Type2">Type2</option>
+            <option value="CCS">CCS</option>
+            <option value="CHAdeMO">CHAdeMO</option>
+          </select>
+
+          <select
+            name="userId"
+            value={form.userId}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+          >
+            <option value="">Select a user</option>
+            {users.map((u) => (
+              <option key={u.userId} value={u.userId}>
+                {u.fullName} ({u.email})
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

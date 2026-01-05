@@ -10,34 +10,40 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const fadeUp = {
-    hidden: { opacity: 0, y: 12 },
-    show: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.08, duration: 0.5, ease: "easeOut" }
-    }),
-  };
+  // ================= AUTH CHECK =================
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
+
+  function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
+
+  // ================= NAV ITEMS =================
+  const navItems = [
+    ["Home", "/", "public"],
+    ["Trip Planner", "/trip", "public"],
+    ["Stations", "/stations", "public"],
+    ["Bookings", "/bookings", "private"],
+    ["Payments", "/payments", "private"],
+    ["Dashboard", "/user-dashboard", "private"],
+  ];
 
   return (
-    <header className="bg-black backdrop-blur-md fixed top-0 w-full z-50 shadow-md border-b border-black/30">
-      <div className="w-screen px-4 md:px-8 py-4 flex items-center justify-between">
+    <header className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-        {/* Logo + Animated AMPORA */}
+        {/* ================= LOGO ================= */}
         <div className="flex items-center gap-3 select-none">
-          <img src={logo} alt="Logo" className="w-[50px]" />
+          <img src={logo} alt="Logo" className="w-10 h-10" />
 
-          <motion.div
-            initial="hidden"
-            animate="show"
-            className="flex text-2xl font-extrabold tracking-wide"
-          >
+          <motion.div className="flex text-xl font-extrabold tracking-wide">
             {letters.map((letter, i) => (
               <motion.span
                 key={i}
-                custom={i}
-                variants={fadeUp}
-                className="text-white drop-shadow transition"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
+                className="text-white"
               >
                 {letter}
               </motion.span>
@@ -45,64 +51,96 @@ export default function Navbar() {
           </motion.div>
         </div>
 
-        {/* Desktop Menu */}
-        <nav className="hidden md:flex gap-8 font-medium">
-          {[
-            ["Home", "/"],
-            ["Trip Planner", "/trip"],
-            ["Station", "/stations"],
-            ["Bookings", "/bookings"],
-            ["Payments", "/payments"],
-            ["Dashboard", "/user-dashboard"]
-          ].map(([name, link]) => (
-            <a
-              key={name}
-              href={link}
-              className="text-white hover:text-white/80"
-            >
-              <span className="text-white hover:text-white/80">{name}</span>
-            </a>
-          ))}
+        {/* ================= DESKTOP NAV ================= */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+          {navItems
+            .filter(([_, __, type]) => type === "public" || isLoggedIn)
+            .map(([name, link]) => (
+              <a
+                key={name}
+                href={link}
+                className="relative text-white/80 hover:text-white transition
+                           after:absolute after:left-0 after:-bottom-1
+                           after:w-0 after:h-[2px] after:bg-[#00d491]
+                           hover:after:w-full after:transition-all"
+              >
+                {name}
+              </a>
+            ))}
         </nav>
 
-        {/* Desktop Right Side */}
-        <div className="hidden md:flex items-center gap-6vtext-white">
+        {/* ================= ACTIONS ================= */}
+        <div className="hidden md:flex items-center gap-4">
 
-          {/* App Download Button */}
+          {/* App Button */}
           <a
             href="#"
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/30 backdrop-blur hover:bg-white/20 transition text-white text-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-full
+                       bg-white/10 border border-white/20
+                       hover:bg-white/20 transition text-white text-sm"
           >
-            <FaGooglePlay className="text-sm" />
-            <FaAppStoreIos className="text-sm" />
-            <span className="text-white">App</span>
+            <FaGooglePlay />
+            <FaAppStoreIos />
+            <span>App</span>
           </a>
 
-          {/* Profile Avatar */}
-          <div className="relative ">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="w-10 h-10 rounded-full   border border-green-500 flex items-center justify-center"
-            >
-              <FiUser className="text-white text-xl" />
-            </button>
+          {/* ================= AUTH BUTTONS ================= */}
+          {!isLoggedIn ? (
+            <>
+              <a
+                href="/login"
+                className="px-4 py-2 rounded-full border border-[#00d491]
+                           text-white hover:bg-[#00d491]/10 transition"
+              >
+                Login
+              </a>
+              <a
+                href="/signup"
+                className="px-4 py-2 rounded-full bg-[#00d491]
+                           text-black font-semibold hover:opacity-90 transition"
+              >
+                Sign Up
+              </a>
+            </>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="w-10 h-10 rounded-full border border-[#00d491]
+                           flex items-center justify-center
+                           hover:bg-[#00d491]/10 transition"
+              >
+                <FiUser className="text-white text-lg" />
+              </button>
 
-            {/* Profile Dropdown */}
-            {profileOpen && (
-              <div className="absolute right-0 mt-3 w-48 bg-white/95 backdrop-blur-xl shadow-lg rounded-xl py-2 text-gray-700">
-                <a href="/user-dashboard" className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100">
-                  <FiSettings /> Profile Settings
-                </a>
-                <a href="/logout" className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100">
-                  <FiLogOut /> Logout
-                </a>
-              </div>
-            )}
-          </div>
+              {profileOpen && (
+                <div className="absolute right-0 mt-3 w-52 rounded-2xl
+                               bg-white shadow-xl overflow-hidden">
+                  <a
+                    href="/user-dashboard"
+                    className="flex items-center gap-3 px-4 py-3
+                               hover:bg-gray-100 text-gray-700"
+                  >
+                    <FiSettings /> Profile
+                  </a>
+                  <button
+                    onClick={logout}
+                    className="w-full flex items-center gap-3 px-4 py-3
+                               hover:bg-gray-100 text-gray-700 text-left"
+                  >
+                    <FiLogOut /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Mobile menu trigger */}
-        <button className="md:hidden text-white" onClick={() => setOpen(!open)}>
+        {/* ================= MOBILE TOGGLE ================= */}
+        <button
+          className="md:hidden text-white"
+          onClick={() => setOpen(!open)}
+        >
           <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2">
             {open ? (
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -113,37 +151,45 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ================= MOBILE MENU ================= */}
       {open && (
-        <div className="md:hidden bg-white px-6 pb-4 shadow-lg">
-
-          {/* Mobile nav links */}
-          <nav className="flex flex-col gap-4 text-gray-700 font-medium">
-            <a href="/">Home</a>
-            <a href="/trip">Trip Planner</a>
-            <a href="/stations">Stations</a>
-            <a href="/bookings">Bookings</a>
-            <a href="/payments">Payments</a>
-            <a href="/user-dashboard">Dashboard</a>
+        <div className="md:hidden bg-black/95 backdrop-blur-xl px-6 pb-6 border-t border-white/10">
+          <nav className="flex flex-col gap-4 text-white/90 mt-4">
+            {navItems
+              .filter(([_, __, type]) => type === "public" || isLoggedIn)
+              .map(([name, link]) => (
+                <a key={name} href={link}>
+                  {name}
+                </a>
+              ))}
           </nav>
 
-          {/* Mobile App Download */}
-          <div className="flex gap-3 mt-4">
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-              <FaGooglePlay /> Android
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-              <FaAppStoreIos /> iOS
-            </button>
-          </div>
-
-          {/* Mobile Profile */}
-          <div className="mt-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-              <FiUser className="text-gray-600 text-xl" />
+          {!isLoggedIn ? (
+            <div className="flex gap-3 mt-6">
+              <a
+                href="/login"
+                className="w-full text-center py-2 bg-white/10
+                           rounded-xl text-white"
+              >
+                Login
+              </a>
+              <a
+                href="/signup"
+                className="w-full text-center py-2 bg-[#00d491]
+                           rounded-xl text-black font-semibold"
+              >
+                Sign Up
+              </a>
             </div>
-            <a href="/user-dashboard" className="text-gray-700">Profile</a>
-          </div>
+          ) : (
+            <button
+              onClick={logout}
+              className="mt-6 w-full py-2 bg-red-500
+                         rounded-xl text-white"
+            >
+              Logout
+            </button>
+          )}
         </div>
       )}
     </header>

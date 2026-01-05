@@ -19,8 +19,8 @@ import TripPlanner from "./components/TripPlanner/TripPlanner.jsx";
 import StationFinder from "./pages/StationFinder.jsx";
 import BookingsPage from "./pages/BookingsPage.jsx";
 import PaymentPage from "./pages/PaymentPage.jsx";
-import UserDashboard from "./pages/UserDashboard.jsx";
-import UserProfile from "./pages/UserProfile.jsx";
+import UserDashboard from "./pages/user/UserDashboard.jsx";
+import UserProfile from "./pages/user/UserProfile.jsx";
 import VehicleManager from "./pages/VehicleManager.jsx";
 import StationDetails from "./pages/StationDetails.jsx";
 import Notifications from "./pages/Notifications.jsx";
@@ -42,9 +42,19 @@ import Maintenance from "./pages/Maintenance.jsx";
 import AdminLayout from "./components/Layout.jsx";
 import AdminDashboardpage from "./pages/admin/Dashboard.jsx";
 import AdminVehicle from "./pages/admin/Vehicle.jsx";
+
 import AdminUserpage from "./pages/admin/UserPage.jsx";
 import AdminChargerSessionpage from "./pages/admin/ChargerSession.jsx";
 import AdminChargerStationPage from "./pages/admin/ChargerStation.jsx";
+
+
+import AdminLayout from "./components/Layout.jsx";
+import PaymentSuccess from "./pages/PaymentSuccess.jsx";
+import ChargerPage from "./pages/admin/Charger.jsx";
+import Subscription from "./pages/admin/Subscription.jsx";
+import BookingStation from "./pages/admin/BookingStation.jsx";
+import PackageSelector from "./pages/PackageSelector.jsx";
+
 
 function AppLayout() {
   const { pathname } = useLocation();
@@ -58,7 +68,11 @@ function AppLayout() {
 
   return (
     <>
+
       {!hideNavbarFooter && <Navbar />}
+
+      {!isAuthPage && !isAdminPage && <Navbar />}
+
 
       <LoaderProvider>
         <Routes>
@@ -81,6 +95,8 @@ function AppLayout() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<HelpSupport />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+           <Route path="/package" element={<PackageSelector />} />
 
           {/* ---------- OPERATOR ---------- */}
           <Route element={<OperatorLayout />}>
@@ -95,11 +111,22 @@ function AppLayout() {
           {/* ---------- ADMIN ---------- */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardpage />} />
-            <Route path="dashboard" element={<AdminDashboardpage />} />
-            <Route path="vehicle" element={<AdminVehicle />} />
-            <Route path="users" element={<AdminUserpage />} />
-            <Route path="charger-session" element={<AdminChargerSessionpage />} />
-            <Route path="charger-stations" element={<AdminChargerStationPage />} />
+
+            <Route path="dashboard" element={<AdminDashboardpage />} />{" "}
+            <Route path="vehicle" element={<AdminVehicle />} />{" "}
+            <Route path="users" element={<AdminUserpage />} />{" "}
+            <Route
+              path="charger-session"
+              element={<AdminChargerSessionpage />}
+            />{" "}
+            <Route
+              path="charger-stations"
+              element={<AdminChargerStationPage />}
+            />{" "}
+            <Route path="charger" element={<ChargerPage />} />
+            <Route path="subscriptions" element={<Subscription />} />
+            <Route path="BookingStation" element={<BookingStation />} />
+
           </Route>
         </Routes>
       </LoaderProvider>
