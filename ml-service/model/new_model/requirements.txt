@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-dotenv
+psycopg2-binary
+googlemaps
+pandas
+numpy
+joblib
+pytz
+scikit-learn
+groq
